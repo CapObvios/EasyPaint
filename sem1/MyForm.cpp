@@ -1,22 +1,19 @@
-#include "MyForm.h"  
+п»ї#include "MyForm.h"  
 #include "Drawer.h"
 
 #include <Windows.h>
 
 
-using namespace sem1; //пространство имен из заголовочного файла формы
-using namespace Drawer; // Логика отрисовки
+using namespace sem1; //Windows Forms
+using namespace Drawer; // Drawing logic
 
 /*
-		   Автор:	Павлов Сергей Юрьевич, ББИ 141, 20.9.2017
-Среда разработки:	VS 2015 Community. 
+		  Author:	Sergey Pavlov, BBI 141, 20.9.2017
+		Software:	VS 2015 Community. 
 			  OS:	Windows 10
 
-Семинар 1:
-Выполнены пункты:	Отрисовка линии, круг, эллипс. То есть, все пункты.
-					Логика отрисовки в файлах Drawer.cpp и Drawer.h 
-
-
+Seminar 1:
+Completed tasks:	Line, ellipse and circle drawing. Drawing logic is in the Drawer.cpp
 */
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -45,7 +42,7 @@ sem1::MyForm::MyForm(void)
 
 	Pen^ stdFuncsPen = gcnew Pen(Color::Red);
 	
-	//Отрисовка линий разработанной логикой
+	//ГЋГІГ°ГЁГ±Г®ГўГЄГ  Г«ГЁГ­ГЁГ© Г°Г Г§Г°Г ГЎГ®ГІГ Г­Г­Г®Г© Г«Г®ГЈГЁГЄГ®Г©
 	DrawLine({ 100, 100, 150, 90 }, Color::Black);
 	DrawLine({ 100, 100, 150, 110 }, Color::Black);
 	DrawLine({ 100, 100, 50, 90 }, Color::Black);
@@ -55,7 +52,7 @@ sem1::MyForm::MyForm(void)
 	DrawLine({ 100, 100, 110, 50 }, Color::Black);
 	DrawLine({ 100, 100, 90, 50 }, Color::Black);
 
-	//отрисовка линий стандартной функцией
+	//Г®ГІГ°ГЁГ±Г®ГўГЄГ  Г«ГЁГ­ГЁГ© Г±ГІГ Г­Г¤Г Г°ГІГ­Г®Г© ГґГіГ­ГЄГ¶ГЁГҐГ©
 	g->DrawLine(stdFuncsPen, 200, 100, 250, 90);
 	g->DrawLine(stdFuncsPen, 200, 100, 250, 110);
 	g->DrawLine(stdFuncsPen, 200, 100, 150, 90);
@@ -65,19 +62,19 @@ sem1::MyForm::MyForm(void)
 	g->DrawLine(stdFuncsPen, 200, 100, 210, 50);
 	g->DrawLine(stdFuncsPen, 200, 100, 190, 50);
 
-	//отрисовка кругов разработанной логикой
+	//Г®ГІГ°ГЁГ±Г®ГўГЄГ  ГЄГ°ГіГЈГ®Гў Г°Г Г§Г°Г ГЎГ®ГІГ Г­Г­Г®Г© Г«Г®ГЈГЁГЄГ®Г©
 	d->DrawCircle(g, DrawingAreaPB, 100, 200, 15, Color::Black);
 	d->DrawCircle(g, DrawingAreaPB, 100, 200, 25, Color::Black);
 
-	//отрисовка кругов стандартной функцией
+	//Г®ГІГ°ГЁГ±Г®ГўГЄГ  ГЄГ°ГіГЈГ®Гў Г±ГІГ Г­Г¤Г Г°ГІГ­Г®Г© ГґГіГ­ГЄГ¶ГЁГҐГ©
 	g->DrawEllipse(stdFuncsPen, 185, 185, 30, 30);
 	g->DrawEllipse(stdFuncsPen, 175, 175, 50, 50);
 
-	//отрисовка эллипсов разработанной логикой
+	//Г®ГІГ°ГЁГ±Г®ГўГЄГ  ГЅГ«Г«ГЁГЇГ±Г®Гў Г°Г Г§Г°Г ГЎГ®ГІГ Г­Г­Г®Г© Г«Г®ГЈГЁГЄГ®Г©
 	d->DrawEllipse(g, DrawingAreaPB, 300, 100, 30, 60, Color::Black);
 	d->DrawEllipse(g, DrawingAreaPB, 300, 100, 60, 30, Color::Black);
 
-	//отрисовка эллипсов стандартной функцией
+	//Г®ГІГ°ГЁГ±Г®ГўГЄГ  ГЅГ«Г«ГЁГЇГ±Г®Гў Г±ГІГ Г­Г¤Г Г°ГІГ­Г®Г© ГґГіГ­ГЄГ¶ГЁГҐГ©
 	g->DrawEllipse(stdFuncsPen, 270, 140, 60, 120);
 	g->DrawEllipse(stdFuncsPen, 240, 170, 120, 60);
 
@@ -99,31 +96,64 @@ System::Void sem1::MyForm::DrawLine(const Line line, Color col)
 	d->DrawLine(g, DrawingAreaPB, line.x1, line.y1, line.x2, line.y2, col);
 }
 
+System::Void sem1::MyForm::drawPixelsAndHandleBuffer(System::Collections::Generic::List<Point>^ pixels, const bool & isTemporary)
+{
+	d->PaintPixelArray(g, DrawingAreaPB, buffer); //return buffer
+	buffer->Clear(); // clear buffer
+	if (isTemporary) // is a temp line -> fill in the buffer before printing pixels
+	{
+		for each (Point P in pixels)
+		{
+			if (P.X >= bm->Width || P.X < 0 || P.Y >= bm->Height || P.Y < 0)
+				continue;
+			if (buffer->ContainsKey(P))
+				continue;
+			buffer->Add(P, bm->GetPixel(P.X, P.Y));
+		}
+	}
+	d->PaintPixelArray(g, DrawingAreaPB, pixels, drawingColor); // transfer pixels to the drawing area
+}
+
+System::Void sem1::MyForm::handleDrawObject(const bool & isTemporary)
+{
+	pointEnd = getCurMousePBPosition();
+
+	System::Collections::Generic::List<Point>^ pixels;
+
+	if (drawingMode == DrawingMode::line)
+	{
+		pixels = d->GetLinePixels(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y);		
+	}
+	else if (drawingMode == DrawingMode::circle)
+	{
+		//radius
+		double unroundedRadius = Math::Sqrt(Math::Pow(pointEnd.X - pointStart.X, 2) + Math::Pow(pointEnd.Y - pointStart.Y, 2));
+		int radius = Math::Round(unroundedRadius, 0);
+		//get pixels
+		pixels = d->GetCirclePixels(pointStart.X, pointStart.Y, radius);
+	}
+	else if (drawingMode == DrawingMode::ellipse)
+	{
+		//get radiuses
+		int a = Math::Abs(pointEnd.X - pointStart.X), b = Math::Abs(pointEnd.Y - pointStart.Y);
+		//get pixels
+		pixels = d->GetEllipsePixels(pointStart.X, pointStart.Y, a, b);
+	}
+
+	drawPixelsAndHandleBuffer(pixels, isTemporary);
+}
+
 System::Void sem1::MyForm::pb_MouseDown(System::Object ^ sender, System::Windows::Forms::MouseEventArgs ^ e)
 {
+	pointStart = getCurMousePBPosition();
 	isMouseDown = true;
 	if (drawingMode == DrawingMode::none)
 	{
 		return;
 	}
-	else if (drawingMode == DrawingMode::line)
-	{
-		pointStart = getCurMousePBPosition();
-	}
-	else if (drawingMode == DrawingMode::circle)
-	{
-		pointStart = getCurMousePBPosition();
-	}
-	else if (drawingMode == DrawingMode::ellipse)
-	{
-		pointStart = getCurMousePBPosition();
-		Drawer::SimpleDrawer^ d;
-		d->DrawEllipse(g, DrawingAreaPB, pointStart.X, pointStart.Y, (int)(Radius1NB->Value), (int)(Radius2NB->Value), drawingColor);
-	}
 	else if (drawingMode == DrawingMode::seedFill)
 	{
 		pointStart = getCurMousePBPosition();
-		Drawer::SimpleDrawer^ d;
 		d->SeedLineFill(g, bm, DrawingAreaPB, pointStart.X, pointStart.Y, drawingColor);
 	}
 }
@@ -131,78 +161,22 @@ System::Void sem1::MyForm::pb_MouseDown(System::Object ^ sender, System::Windows
 System::Void sem1::MyForm::pb_MouseUp(System::Object ^ sender, System::Windows::Forms::MouseEventArgs ^ e)
 {
 	isMouseDown = false;
-	if (drawingMode == DrawingMode::none || drawingMode == DrawingMode::ellipse || drawingMode == DrawingMode::seedFill)
-	{
-		return;
-	}
-	else if (drawingMode == DrawingMode::line || drawingMode == DrawingMode::circle)
-	{
-		pointEnd = getCurMousePBPosition();
-		if (drawingMode == DrawingMode::line)
-		{
-			Drawer::SimpleDrawer^ d;
-			//d->DrawLine(g, DrawingAreaPB, pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y, drawingColor);
-			d->PaintPixelArray(g, DrawingAreaPB, buffer);
-			buffer->Clear();
-			auto pixels = d->GetLinePixels(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y);
-			d->PaintPixelArray(g, DrawingAreaPB, pixels, drawingColor);
-		}
-		else if (drawingMode == DrawingMode::circle)
-		{
-			double unroundedRadius = Math::Sqrt(Math::Pow(pointEnd.X - pointStart.X, 2) + Math::Pow(pointEnd.Y - pointStart.Y, 2));
-			int radius = Math::Round(unroundedRadius, 0);
-			Drawer::SimpleDrawer^ d;
-			d->PaintPixelArray(g, DrawingAreaPB, buffer);
-			buffer->Clear();
-			auto pixels = d->GetCirclePixels(pointStart.X, pointStart.Y, radius);
-			d->PaintPixelArray(g, DrawingAreaPB, pixels, drawingColor);
-			//d->DrawCircle(g, DrawingAreaPB, pointStart.X, pointStart.Y, radius, drawingColor);
-		}
+	
+	if (drawingMode == DrawingMode::line || drawingMode == DrawingMode::circle || drawingMode == DrawingMode::ellipse)
+	{		
+		handleDrawObject(false);
 	}
 }
 
 System::Void sem1::MyForm::DrawingAreaPB_MouseMove(System::Object ^ sender, System::Windows::Forms::MouseEventArgs ^ e)
 {
-	if (drawingMode == DrawingMode::none)
+	if (!isMouseDown || drawingMode == DrawingMode::none)
 	{
 		return;
 	}
-	else if (drawingMode == DrawingMode::line && isMouseDown)
+	else if (drawingMode == DrawingMode::line || drawingMode == DrawingMode::circle || drawingMode == DrawingMode::ellipse)
 	{
-		pointEnd = getCurMousePBPosition();
-		Drawer::SimpleDrawer^ d;
-		d->PaintPixelArray(g, DrawingAreaPB, buffer);
-		buffer->Clear();
-		auto pixels = d->GetLinePixels(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y);
-		for each (Point P in pixels)
-		{
-			if (P.X >= bm->Width || P.X < 0 || P.Y >= bm->Height || P.Y < 0)
-				continue;
-			buffer->Add(P, bm->GetPixel(P.X, P.Y));
-		}		
-		d->PaintPixelArray(g, DrawingAreaPB, pixels, drawingColor);
-	}
-	else if (drawingMode == DrawingMode::circle && isMouseDown)
-	{
-		pointEnd = getCurMousePBPosition();
-		double unroundedRadius = Math::Sqrt(Math::Pow(pointEnd.X - pointStart.X, 2) + Math::Pow(pointEnd.Y - pointStart.Y, 2));
-		int radius = Math::Round(unroundedRadius, 0);
-		Drawer::SimpleDrawer^ d;
-		d->PaintPixelArray(g, DrawingAreaPB, buffer);
-		buffer->Clear();
-		auto pixels = d->GetCirclePixels(pointStart.X, pointStart.Y, radius);
-		for each (Point P in pixels)
-		{
-			if (P.X >= bm->Width || P.X < 0 || P.Y >= bm->Height || P.Y < 0) { continue; }
-			if (buffer->ContainsKey(P)) { continue; }
-
-			buffer->Add(P, bm->GetPixel(P.X, P.Y));
-		}
-		d->PaintPixelArray(g, DrawingAreaPB, pixels, drawingColor);
-	}
-	else
-	{
-		return;
+		handleDrawObject(true);
 	}
 }
 
@@ -256,10 +230,10 @@ System::Void sem1::MyForm::ColorMenuButton_Click(System::Object ^ sender, System
 
 System::Void sem1::MyForm::AboutMenuButton_Click(System::Object ^ sender, System::EventArgs ^ e)
 {
-	MessageBox::Show("Проект 1. Алгоритмы Брезенхема.\nАвтор: Павлов Сергей Юрьевич\nГруппа: ББИ141" +
-		"\nПрограмма отрисовывает линии и круги по зажатию левой кнопки мыши." +
-		"\nПри рисовании эллипса необходимо выбрать цифры вверху окна - его радиусы." +
-		"\nРисуется по нажатию левой кнопки мыши" +
-		"\nВыбор цвета в пункте меню \"Рисование\"" +
-		"\nОчистить поле для рисования можно в пункте меню \"Главная\"");
+	MessageBox::Show("РџСЂРѕРµРєС‚ 1. РђР»РіРѕСЂРёС‚РјС‹ Р‘СЂРµР·РµРЅС…РµРјР°.\nРђРІС‚РѕСЂ: РџР°РІР»РѕРІ РЎРµСЂРіРµР№ Р®СЂСЊРµРІРёС‡\nР“СЂСѓРїРїР°: Р‘Р‘Р141" +
+		"\nРџСЂРѕРіСЂР°РјРјР° РѕС‚СЂРёСЃРѕРІС‹РІР°РµС‚ Р»РёРЅРёРё Рё РєСЂСѓРіРё РїРѕ Р·Р°Р¶Р°С‚РёСЋ Р»РµРІРѕР№ РєРЅРѕРїРєРё РјС‹С€Рё." +
+		"\nРџСЂРё СЂРёСЃРѕРІР°РЅРёРё СЌР»Р»РёРїСЃР° РЅРµРѕР±С…РѕРґРёРјРѕ РІС‹Р±СЂР°С‚СЊ С†РёС„СЂС‹ РІРІРµСЂС…Сѓ РѕРєРЅР° - РµРіРѕ СЂР°РґРёСѓСЃС‹." +
+		"\nР РёСЃСѓРµС‚СЃСЏ РїРѕ РЅР°Р¶Р°С‚РёСЋ Р»РµРІРѕР№ РєРЅРѕРїРєРё РјС‹С€Рё" +
+		"\nР’С‹Р±РѕСЂ С†РІРµС‚Р° РІ РїСѓРЅРєС‚Рµ РјРµРЅСЋ \"Р РёСЃРѕРІР°РЅРёРµ\"" +
+		"\nРћС‡РёСЃС‚РёС‚СЊ РїРѕР»Рµ РґР»СЏ СЂРёСЃРѕРІР°РЅРёСЏ РјРѕР¶РЅРѕ РІ РїСѓРЅРєС‚Рµ РјРµРЅСЋ \"Р“Р»Р°РІРЅР°СЏ\"");
 }

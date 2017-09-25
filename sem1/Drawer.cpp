@@ -8,9 +8,7 @@
 	using namespace System::Windows::Forms;
 	using namespace Drawer;
 	using namespace System::Collections::Generic;
-	///<summary>
-	/// Отрисовывает линию
-	///</summary>
+
 	System::Void Drawer::SimpleDrawer::DrawLine(System::Drawing::Graphics ^ g, System::Windows::Forms::PictureBox ^ DrawingAreaPB, const int & x1, const int & y1, const int & x2, const int & y2, System::Drawing::Color col)
 	{		
 		SolidBrush^ brush = gcnew SolidBrush(col);
@@ -22,8 +20,6 @@
 		sx = Math::Sign(x2 - x);
 		sy = Math::Sign(y2 - y);
 
-		// По ходу алгоритма Х и У взаимоисключающе могут быть либо точно изменяющимися, либо неточно. 
-		// Назначаем переменные, которые затем будут использоваться в алгоритме
 		int*  DefChanged = &x; 
 		int*  UndefChanged = &y;
 		int*  DefChSign = &sx;
@@ -41,21 +37,19 @@
 			UndefChDelta = &dx;
 		}
 
-		// Изначальное целочисленное значение ошибки, которая отвечает за сдвиг.
 		int E = 2 * *UndefChDelta - *DefChDelta;
 
 		g->FillRectangle(brush, x, y, 1, 1);
 
 		for (size_t i = 1; i <= *DefChDelta; i++)
 		{
-			// Изменяем точно изменяющуюся координату
 			*DefChanged += *DefChSign;
 
-			if (E < 0) // Если ошибка меньше нуля - не увеличиваем вторую координату
+			if (E < 0)
 			{
 				E += 2 * *UndefChDelta;
 			}
-			else // Если ошибка превысила или равна нулю - увеличиваем вторую координату
+			else
 			{
 				E += -2 * *DefChDelta + 2 * *UndefChDelta;
 				*UndefChanged += *UndefChSign;
@@ -79,8 +73,6 @@
 		sx = Math::Sign(x2 - x);
 		sy = Math::Sign(y2 - y);
 
-		// По ходу алгоритма Х и У взаимоисключающе могут быть либо точно изменяющимися, либо неточно. 
-		// Назначаем переменные, которые затем будут использоваться в алгоритме
 		int*  DefChanged = &x;
 		int*  UndefChanged = &y;
 		int*  DefChSign = &sx;
@@ -98,21 +90,19 @@
 			UndefChDelta = &dx;
 		}
 
-		// Изначальное целочисленное значение ошибки, которая отвечает за сдвиг.
 		int E = 2 * *UndefChDelta - *DefChDelta;
 
 		points->Add(Point(x, y));
 
 		for (size_t i = 1; i <= *DefChDelta; i++)
 		{
-			// Изменяем точно изменяющуюся координату
 			*DefChanged += *DefChSign;
 
-			if (E < 0) // Если ошибка меньше нуля - не увеличиваем вторую координату
+			if (E < 0) 
 			{
 				E += 2 * *UndefChDelta;
 			}
-			else // Если ошибка превысила или равна нулю - увеличиваем вторую координату
+			else
 			{
 				E += -2 * *DefChDelta + 2 * *UndefChDelta;
 				*UndefChanged += *UndefChSign;
@@ -142,28 +132,28 @@
 			g->FillRectangle(brush, -x + x0, y + y0, 1, 1);
 			g->FillRectangle(brush, -x + x0, -y + y0, 1, 1);
 
-			if (D < 0) // => радиус линии, проходящей через диагональную точку меньше, чем реальный => необходимо брать дальнюю или диагональную
+			if (D < 0)
 			{
 				T = 2 * D + 2 * y - 1;
 			}
-			else if (D > 0) // Наоборот
+			else if (D > 0)
 			{
 				T = 2 * D - 2 * x - 1;
 			}
 
-			if (D < 0 && T <= 0) // => Целимся в дальнюю точку && Линия проходит ближе к дальней точке
+			if (D < 0 && T <= 0) 
 			{
-				x++; // сдвигаемся по Х
+				x++;
 				D += 2 * x + 1;
 			}
-			else if (D > 0 && T > 0) // => Целимся в ближнюю точку && Линия проходит ближе к ближней точке
+			else if (D > 0 && T > 0)
 			{
-				y--; // сдвигаемся по У
+				y--;
 				D += -2 * y + 1;
 			}
-			else // D == 0 || близко к диагонали.
+			else
 			{
-				x++; y--; // Сдвигаемся по диагонали
+				x++; y--; 
 				D += 2 * x - 2 * y + 2;
 			}
 		} while (y >= lim);
@@ -204,17 +194,17 @@
 				T = 2 * D - (2 * x + 1)*b*b;
 			}
 
-			if (D < 0 && T <= 0) // => 
+			if (D < 0 && T <= 0)
 			{
 				x++;
 				D += (2 * x + 1)*b*b;
 			}
-			else if (D > 0 && T > 0) // =>
+			else if (D > 0 && T > 0)
 			{
 				y--;
 				D += (-2 * y + 1)*a*a;
 			}
-			else // D == 0 || близко к диагонали.
+			else
 			{
 				x++; y--;
 				D += (2 * x + 1)*b*b + (-2 * y + 1)*a*a;
@@ -255,17 +245,17 @@
 				T = 2 * D - (2 * x + 1)*b*b;
 			}
 
-			if (D < 0 && T <= 0) // => 
+			if (D < 0 && T <= 0)
 			{
 				x++;
 				D += (2 * x + 1)*b*b;
 			}
-			else if (D > 0 && T > 0) // =>
+			else if (D > 0 && T > 0)
 			{
 				y--;
 				D += (-2 * y + 1)*a*a;
 			}
-			else // D == 0 || близко к диагонали.
+			else
 			{
 				x++; y--;
 				D += (2 * x + 1)*b*b + (-2 * y + 1)*a*a;
@@ -289,9 +279,8 @@
 			return;
 		 
 		Stack<Point> PixelsToCheck;
-		int xmin = 0, xmax = bm->Size.Width - 1, ymin = 0, ymax = bm->Size.Height - 1; // Границы окна отрисовки
+		int xmin = 0, xmax = bm->Size.Width - 1, ymin = 0, ymax = bm->Size.Height - 1;
 
-		// Получить самую правую точку того же цвета от затравочной
 		{
 			int x = x0;			
 			while (x+1 <= xmax && bm->GetPixel(x+1, y0).Equals(colorToOverride))
@@ -304,7 +293,6 @@
 		
 		while (PixelsToCheck.Count != 0)
 		{
-			// Закрасить
 			Point rightPoint = PixelsToCheck.Peek();
 			Point leftPoint = PixelsToCheck.Pop();
 
@@ -320,7 +308,6 @@
 
 			DrawingAreaPB->Refresh();
 
-			// Проверить вехнюю и нижнюю строчку
 			for (int lineStep = -1; lineStep <= 1; lineStep+=2)
 			{
 				for (size_t i = leftPoint.X; i <= rightPoint.X; i++)

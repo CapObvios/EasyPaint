@@ -7,7 +7,7 @@ namespace Drawer
 
 	public: 
 			///<summary>
-			/// Отрисовать линию по заданным координатам, элементу графики и поля для рисования.
+			/// Draw a line
 			///</summary>
 			System::Void DrawLine(
 				System::Drawing::Graphics^ g,
@@ -20,7 +20,7 @@ namespace Drawer
 			);
 
 			///<summary>
-			/// Получить список координат пикселей линии, подлежащих закрашиванию.
+			/// Get line pixels to be drawn
 			///</summary>
 			System::Collections::Generic::List<System::Drawing::Point>^ GetLinePixels(
 				const int & x1,
@@ -30,7 +30,7 @@ namespace Drawer
 			);
 
 			///<summary>
-			/// Отрисовать круг по заданным координатам центра и радиусу, элементу графики и поля для рисования.
+			/// Draw a circle
 			///</summary>
 			System::Void DrawCircle(
 				System::Drawing::Graphics^ g,
@@ -42,7 +42,7 @@ namespace Drawer
 			);
 
 			///<summary>
-			/// Получить список координат пикселей круга, подлежащих закрашиванию.
+			/// Get circle pixels to be drawn
 			///</summary>
 			System::Collections::Generic::List<System::Drawing::Point>^ GetCirclePixels(
 				const int& x0,
@@ -51,7 +51,7 @@ namespace Drawer
 			);
 
 			///<summary>
-			/// Получить список координат пикселей эллипса, подлежащих закрашиванию.
+			/// Get ellipse pixels to be drawn
 			///</summary>
 			System::Collections::Generic::List<System::Drawing::Point>^ Drawer::SimpleDrawer::GetEllipsePixels(
 				const int & x0, 
@@ -61,7 +61,7 @@ namespace Drawer
 			);
 
 			///<summary>
-			/// Отрисовать эллипс по заданным координатам центра и двум радиусам, элементу графики и поля для рисования.
+			/// drawn an ellipse
 			///</summary>
 			System::Void DrawEllipse(
 				System::Drawing::Graphics^ g,
@@ -74,7 +74,7 @@ namespace Drawer
 			);
 
 			///<summary>
-			/// Затравочная построчная заливка
+			/// Fill picturebox with a given seed pixel
 			///</summary>
 			System::Void SeedLineFill(
 				System::Drawing::Graphics^ g,
@@ -86,7 +86,7 @@ namespace Drawer
 			);
 
 			///<summary>
-			/// Закрасить массив пикселей цветом
+			/// Transfer given pixels to a drawing area with the color given
 			///</summary>
 			System::Void PaintPixelArray(
 				System::Drawing::Graphics^ g,
@@ -96,7 +96,7 @@ namespace Drawer
 			);
 
 			///<summary>
-			/// Закрасить массив пикселей указанным
+			/// Transfer given pixel-color dictionary values to a drawing are
 			///</summary>
 			System::Void PaintPixelArray(
 				System::Drawing::Graphics^ g,
