@@ -13,12 +13,89 @@ namespace sem1 {
 	using namespace std;
 	using namespace Drawer;
 	
-	struct Line
+	enum FigureType
 	{
-		int x1;
-		int y1;
-		int x2;
-		int y2;
+		lineObj = 0,
+		circleObj = 2,
+		ellipseObj = 3
+	};
+
+	interface class IGeometry
+	{
+		System::Drawing::Point GetStartPoint();
+		System::Drawing::Point GetEndPoint();
+		FigureType GetFigureType();		
+		System::Drawing::Color GetColor();
+	};
+
+	value class Line : IGeometry
+	{
+	public:
+		int X1;
+		int Y1;
+		int X2;
+		int Y2;
+		System::Drawing::Color Color;
+		Line(const int &x1, const int & y1, const int & x2, const int & y2, const System::Drawing::Color col)
+		{
+			X1 = x1;
+			Y1 = y1;
+			X2 = x2;
+			Y2 = y2;
+			Color = col;
+		}
+
+		// Inherited from IGeometry
+		virtual System::Drawing::Point GetStartPoint();
+		virtual System::Drawing::Point GetEndPoint();
+		virtual FigureType GetFigureType();
+		virtual System::Drawing::Color GetColor();
+	};
+
+	value class Circle : IGeometry
+	{
+	public:
+		int X0;
+		int Y0;
+		int R;
+		System::Drawing::Color Color;
+		Circle(const int &x0, const int & y0, const int & r, const System::Drawing::Color col)
+		{
+			X0 = x0;
+			Y0 = y0;
+			R = r;
+			Color = col;
+		}
+
+		// Inherited from IGeometry
+		virtual System::Drawing::Point GetStartPoint();
+		virtual System::Drawing::Point GetEndPoint();
+		virtual FigureType GetFigureType();
+		virtual System::Drawing::Color GetColor();
+	};
+
+	value class Ellipse : IGeometry
+	{
+	public:
+		int X0;
+		int Y0;
+		int A;
+		int B;
+		System::Drawing::Color Color;
+		Ellipse(const int &x0, const int & y0, const int & a, const int & b, const System::Drawing::Color col)
+		{
+			X0 = x0;
+			Y0 = y0;
+			A = a;
+			B = b;
+			Color = col;
+		}
+
+		// Inherited from IGeometry
+		virtual System::Drawing::Point GetStartPoint();
+		virtual System::Drawing::Point GetEndPoint();
+		virtual FigureType GetFigureType();
+		virtual System::Drawing::Color GetColor();
 	};
 
 	enum DrawingMode
@@ -27,7 +104,8 @@ namespace sem1 {
 		line = 1,
 		circle = 2,
 		ellipse = 3,
-		seedFill = 4
+		seedFill = 4,
+		polylines = 5
 	};
 
 	/// <summary>
@@ -37,8 +115,7 @@ namespace sem1 {
 	{		
 	private: 
 		System::Windows::Forms::MenuStrip^  menuStrip1;
-		System::Windows::Forms::ToolStripMenuItem^  DrawingMenuNode;
-		
+		System::Windows::Forms::ToolStripMenuItem^  DrawingMenuNode;		
 		System::Windows::Forms::ToolStripMenuItem^  LineMenuButton;
 		System::Windows::Forms::ToolStripMenuItem^  CircleMenuButton;
 		System::Windows::Forms::ToolStripMenuItem^  EllipseMenuButton;
@@ -48,13 +125,9 @@ namespace sem1 {
 		System::Windows::Forms::ToolStripMenuItem^  ExitMenuButton;
 		System::Windows::Forms::ToolStripMenuItem^  ColorMenuButton;	
 		System::Windows::Forms::ColorDialog^  colorPicker;
-
-
-
-
-
 		System::Windows::Forms::PictureBox^  DrawingAreaPB;
-		System::Windows::Forms::ToolStripMenuItem^  çàëèâêàToolStripMenuItem;
+		System::Windows::Forms::ToolStripMenuItem^  FillToolStripMenuItem;
+		System::Windows::Forms::Button^  applyButton;
 		System::Windows::Forms::ToolStripMenuItem^  seedFillToolStripMenuItem;
 
 		System::Drawing::Bitmap^ bm;
@@ -64,15 +137,26 @@ namespace sem1 {
 
 		DrawingMode drawingMode;
 
-		System::Collections::Generic::Dictionary<Point, Color>^ buffer;
+		System::Drawing::Point polylineStartPoint;
+		System::Collections::Generic::List<IGeometry^>^ longBufferedObjects;
+
 		bool isMouseDown;
+		bool isPolylineBeingDrawn;
+
+		System::Collections::Generic::Dictionary<Point, Color>^ buffer;
+		System::Collections::Generic::Dictionary<Point, Color>^ longBuffer;
+		
+
+
+
+	private: System::Windows::Forms::ToolStripMenuItem^  polylineFigureToolStripMenuItem;
 
 	public:
 		MyForm(void);
 
 	protected:
 		/// <summary>
-		/// Îñâîáîäèòü âñå èñïîëüçóåìûå ðåñóðñû.
+		/// Destructor
 		/// </summary>
 		~MyForm();
 
@@ -98,21 +182,23 @@ namespace sem1 {
 			this->LineMenuButton = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->CircleMenuButton = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->EllipseMenuButton = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->çàëèâêàToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->polylineFigureToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->FillToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->seedFillToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->ColorMenuButton = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->AboutMenuButton = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->colorPicker = (gcnew System::Windows::Forms::ColorDialog());
+			this->applyButton = (gcnew System::Windows::Forms::Button());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->DrawingAreaPB))->BeginInit();
 			this->menuStrip1->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// DrawingAreaPB
 			// 
-			this->DrawingAreaPB->Location = System::Drawing::Point(0, 34);
-			this->DrawingAreaPB->Margin = System::Windows::Forms::Padding(2, 2, 2, 2);
+			this->DrawingAreaPB->Location = System::Drawing::Point(0, 36);
+			this->DrawingAreaPB->Margin = System::Windows::Forms::Padding(2);
 			this->DrawingAreaPB->Name = L"DrawingAreaPB";
-			this->DrawingAreaPB->Size = System::Drawing::Size(1277, 995);
+			this->DrawingAreaPB->Size = System::Drawing::Size(1277, 984);
 			this->DrawingAreaPB->TabIndex = 0;
 			this->DrawingAreaPB->TabStop = false;
 			this->DrawingAreaPB->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::pb_MouseDown);
@@ -147,22 +233,22 @@ namespace sem1 {
 			// ClearMenuButton
 			// 
 			this->ClearMenuButton->Name = L"ClearMenuButton";
-			this->ClearMenuButton->Size = System::Drawing::Size(210, 30);
+			this->ClearMenuButton->Size = System::Drawing::Size(135, 30);
 			this->ClearMenuButton->Text = L"Clear";
 			this->ClearMenuButton->Click += gcnew System::EventHandler(this, &MyForm::ClearMenuButton_Click);
 			// 
 			// ExitMenuButton
 			// 
 			this->ExitMenuButton->Name = L"ExitMenuButton";
-			this->ExitMenuButton->Size = System::Drawing::Size(210, 30);
+			this->ExitMenuButton->Size = System::Drawing::Size(135, 30);
 			this->ExitMenuButton->Text = L"Exit";
 			this->ExitMenuButton->Click += gcnew System::EventHandler(this, &MyForm::ExitMenuButton_Click);
 			// 
 			// DrawingMenuNode
 			// 
-			this->DrawingMenuNode->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {
+			this->DrawingMenuNode->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(6) {
 				this->LineMenuButton,
-					this->CircleMenuButton, this->EllipseMenuButton, this->çàëèâêàToolStripMenuItem, this->ColorMenuButton
+					this->CircleMenuButton, this->EllipseMenuButton, this->polylineFigureToolStripMenuItem, this->FillToolStripMenuItem, this->ColorMenuButton
 			});
 			this->DrawingMenuNode->Name = L"DrawingMenuNode";
 			this->DrawingMenuNode->Size = System::Drawing::Size(65, 29);
@@ -171,42 +257,49 @@ namespace sem1 {
 			// LineMenuButton
 			// 
 			this->LineMenuButton->Name = L"LineMenuButton";
-			this->LineMenuButton->Size = System::Drawing::Size(210, 30);
+			this->LineMenuButton->Size = System::Drawing::Size(207, 30);
 			this->LineMenuButton->Text = L"Line";
 			this->LineMenuButton->Click += gcnew System::EventHandler(this, &MyForm::LineMenuButton_Click);
 			// 
 			// CircleMenuButton
 			// 
 			this->CircleMenuButton->Name = L"CircleMenuButton";
-			this->CircleMenuButton->Size = System::Drawing::Size(210, 30);
+			this->CircleMenuButton->Size = System::Drawing::Size(207, 30);
 			this->CircleMenuButton->Text = L"Circle";
 			this->CircleMenuButton->Click += gcnew System::EventHandler(this, &MyForm::CircleMenuButton_Click);
 			// 
 			// EllipseMenuButton
 			// 
 			this->EllipseMenuButton->Name = L"EllipseMenuButton";
-			this->EllipseMenuButton->Size = System::Drawing::Size(210, 30);
+			this->EllipseMenuButton->Size = System::Drawing::Size(207, 30);
 			this->EllipseMenuButton->Text = L"Ellipse";
 			this->EllipseMenuButton->Click += gcnew System::EventHandler(this, &MyForm::EllipseMenuButton_Click);
 			// 
-			// çàëèâêàToolStripMenuItem
+			// polylineFigureToolStripMenuItem
 			// 
-			this->çàëèâêàToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) { this->seedFillToolStripMenuItem });
-			this->çàëèâêàToolStripMenuItem->Name = L"çàëèâêàToolStripMenuItem";
-			this->çàëèâêàToolStripMenuItem->Size = System::Drawing::Size(210, 30);
-			this->çàëèâêàToolStripMenuItem->Text = L"Fill";
+			this->polylineFigureToolStripMenuItem->Name = L"polylineFigureToolStripMenuItem";
+			this->polylineFigureToolStripMenuItem->Size = System::Drawing::Size(207, 30);
+			this->polylineFigureToolStripMenuItem->Text = L"Polyline figure";
+			this->polylineFigureToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::polylineFigureToolStripMenuItem_Click);
+			// 
+			// FillToolStripMenuItem
+			// 
+			this->FillToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) { this->seedFillToolStripMenuItem });
+			this->FillToolStripMenuItem->Name = L"FillToolStripMenuItem";
+			this->FillToolStripMenuItem->Size = System::Drawing::Size(207, 30);
+			this->FillToolStripMenuItem->Text = L"Fill";
 			// 
 			// seedFillToolStripMenuItem
 			// 
 			this->seedFillToolStripMenuItem->Name = L"seedFillToolStripMenuItem";
-			this->seedFillToolStripMenuItem->Size = System::Drawing::Size(210, 30);
+			this->seedFillToolStripMenuItem->Size = System::Drawing::Size(158, 30);
 			this->seedFillToolStripMenuItem->Text = L"Seed fill";
 			this->seedFillToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::seedFillToolStripMenuItem_Click);
 			// 
 			// ColorMenuButton
 			// 
 			this->ColorMenuButton->Name = L"ColorMenuButton";
-			this->ColorMenuButton->Size = System::Drawing::Size(210, 30);
+			this->ColorMenuButton->Size = System::Drawing::Size(207, 30);
 			this->ColorMenuButton->Text = L"Color";
 			this->ColorMenuButton->Click += gcnew System::EventHandler(this, &MyForm::ColorMenuButton_Click);
 			// 
@@ -217,15 +310,26 @@ namespace sem1 {
 			this->AboutMenuButton->Text = L"About";
 			this->AboutMenuButton->Click += gcnew System::EventHandler(this, &MyForm::AboutMenuButton_Click);
 			// 
+			// applyButton
+			// 
+			this->applyButton->Location = System::Drawing::Point(698, 0);
+			this->applyButton->Name = L"applyButton";
+			this->applyButton->Size = System::Drawing::Size(75, 31);
+			this->applyButton->TabIndex = 2;
+			this->applyButton->Text = L"Apply";
+			this->applyButton->UseVisualStyleBackColor = true;
+			this->applyButton->Click += gcnew System::EventHandler(this, &MyForm::applyButton_Click);
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(9, 20);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(1284, 1030);
+			this->Controls->Add(this->applyButton);
 			this->Controls->Add(this->DrawingAreaPB);
 			this->Controls->Add(this->menuStrip1);
 			this->MainMenuStrip = this->menuStrip1;
-			this->Margin = System::Windows::Forms::Padding(2, 2, 2, 2);
+			this->Margin = System::Windows::Forms::Padding(2);
 			this->Name = L"MyForm";
 			this->Text = L"Seminar N. Sergey Pavlov";
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->DrawingAreaPB))->EndInit();
@@ -242,9 +346,9 @@ namespace sem1 {
 
 		System::Drawing::Point pointStart, pointEnd;
 
-		System::Void drawPixelsAndHandleBuffer(System::Collections::Generic::List<Point>^ pixels, const bool & isTemporary);
+		System::Void drawPixelsAndHandleBuffer(System::Collections::Generic::List<Point>^ pixels, const bool & isTemporary, const bool & isLongTerm);
 
-		System::Void handleDrawObject(const bool & isTemporary);
+		System::Void handleDrawObject(const bool & isTemporary, const bool & isLongTerm);
 
 		System::Void pb_MouseDown(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e);
 
@@ -266,11 +370,18 @@ namespace sem1 {
 		
 		System::Void EllipseMenuButton_Click(System::Object^  sender, System::EventArgs^  e);
 
+		System::Void polylineFigureToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e);
+
 		System::Void seedFillToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e);
 		
 		System::Void ColorMenuButton_Click(System::Object^  sender, System::EventArgs^  e);
 		
-		System::Void AboutMenuButton_Click(System::Object^  sender, System::EventArgs^  e);
+		System::Void AboutMenuButton_Click(System::Object^  sender, System::EventArgs^  e);		
+		
+		System::Void applyButton_Click(System::Object^  sender, System::EventArgs^  e);
 
+		System::Void applyLongBuffer();
+
+		System::Void addObjectToLongBuffer(IGeometry^ object);
 };
 }

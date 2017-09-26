@@ -11,54 +11,20 @@
 
 	System::Void Drawer::SimpleDrawer::DrawLine(System::Drawing::Graphics ^ g, System::Windows::Forms::PictureBox ^ DrawingAreaPB, const int & x1, const int & y1, const int & x2, const int & y2, System::Drawing::Color col)
 	{		
-		SolidBrush^ brush = gcnew SolidBrush(col);
+		auto pixels = GetLinePixels(x1, y1, x2, y2);
+		PaintPixelArray(g, DrawingAreaPB, pixels, col);
+	}
 
-		int x = x1, y = y1, dy, dx, sx, sy;
+	System::Void Drawer::SimpleDrawer::DrawCircle(System::Drawing::Graphics ^ g, System::Windows::Forms::PictureBox ^ DrawingAreaPB, const int & x0, const int & y0, const int & R, Color col)
+	{
+		auto pixels = GetCirclePixels(x0, y0, R);
+		PaintPixelArray(g, DrawingAreaPB, pixels, col);
+	}
 
-		dx = Math::Abs(x2 - x); 
-		dy = Math::Abs(y2 - y); 
-		sx = Math::Sign(x2 - x);
-		sy = Math::Sign(y2 - y);
-
-		int*  DefChanged = &x; 
-		int*  UndefChanged = &y;
-		int*  DefChSign = &sx;
-		int*  UndefChSign = &sy;
-		int*  DefChDelta = &dx;
-		int*  UndefChDelta = &dy;
-
-		if (dy > dx)
-		{
-			DefChanged = &y;
-			UndefChanged = &x;
-			DefChSign = &sy;
-			UndefChSign = &sx;
-			DefChDelta = &dy;
-			UndefChDelta = &dx;
-		}
-
-		int E = 2 * *UndefChDelta - *DefChDelta;
-
-		g->FillRectangle(brush, x, y, 1, 1);
-
-		for (size_t i = 1; i <= *DefChDelta; i++)
-		{
-			*DefChanged += *DefChSign;
-
-			if (E < 0)
-			{
-				E += 2 * *UndefChDelta;
-			}
-			else
-			{
-				E += -2 * *DefChDelta + 2 * *UndefChDelta;
-				*UndefChanged += *UndefChSign;
-			}
-
-			g->FillRectangle(brush, x, y, 1, 1);
-		}
-
-		DrawingAreaPB->Refresh();
+	System::Void Drawer::SimpleDrawer::DrawEllipse(System::Drawing::Graphics ^ g, System::Windows::Forms::PictureBox ^ DrawingAreaPB, const int & x0, const int & y0, const int & a, const int & b, System::Drawing::Color col)
+	{
+		auto pixels = GetEllipsePixels(x0, y0, a, b);
+		PaintPixelArray(g, DrawingAreaPB, pixels, col);
 	}
 
 	System::Collections::Generic::List<System::Drawing::Point>^ Drawer::SimpleDrawer::GetLinePixels(const int & x1, const int & y1, const int & x2, const int & y2)
@@ -111,54 +77,6 @@
 			points->Add(Point(x, y));
 		}		
 		return points;
-	}
-
-
-	System::Void Drawer::SimpleDrawer::DrawCircle(System::Drawing::Graphics ^ g, System::Windows::Forms::PictureBox ^ DrawingAreaPB, const int & x0, const int & y0, const int & R, Color col)
-	{
-		SolidBrush^ brush = gcnew SolidBrush(col);
-
-		int x = 0, y = R;
-
-		int D = 2 * (1 - R);
-		int lim = 0;
-
-		int T;
-
-		do
-		{
-			g->FillRectangle(brush, x + x0, y + y0, 1, 1);
-			g->FillRectangle(brush, x + x0, -y + y0, 1, 1);
-			g->FillRectangle(brush, -x + x0, y + y0, 1, 1);
-			g->FillRectangle(brush, -x + x0, -y + y0, 1, 1);
-
-			if (D < 0)
-			{
-				T = 2 * D + 2 * y - 1;
-			}
-			else if (D > 0)
-			{
-				T = 2 * D - 2 * x - 1;
-			}
-
-			if (D < 0 && T <= 0) 
-			{
-				x++;
-				D += 2 * x + 1;
-			}
-			else if (D > 0 && T > 0)
-			{
-				y--;
-				D += -2 * y + 1;
-			}
-			else
-			{
-				x++; y--; 
-				D += 2 * x - 2 * y + 2;
-			}
-		} while (y >= lim);
-
-		DrawingAreaPB->Refresh();
 	}
 
 	System::Collections::Generic::List<System::Drawing::Point>^ Drawer::SimpleDrawer::GetCirclePixels(const int & x0, const int & y0, const int & R)
@@ -216,57 +134,6 @@
 		} while (y >= lim);
 
 		return points;
-	}
-
-	System::Void Drawer::SimpleDrawer::DrawEllipse(System::Drawing::Graphics ^ g, System::Windows::Forms::PictureBox ^ DrawingAreaPB, const int & x0, const int & y0, const int & a, const int & b, System::Drawing::Color col)
-	{
-		SolidBrush^ brush = gcnew SolidBrush(col);
-
-		int x = 0, y = b;
-
-		int D = a*a - 2 * a*a*b + b*b;
-		int lim = 0;
-
-		int T;
-
-		do
-		{
-			g->FillRectangle(brush, x + x0, y + y0, 1, 1);
-			g->FillRectangle(brush, x + x0, -y + y0, 1, 1);
-			g->FillRectangle(brush, -x + x0, y + y0, 1, 1);
-			g->FillRectangle(brush, -x + x0, -y + y0, 1, 1);
-
-			if (D < 0)
-			{
-				T = 2 * D + (2 * y - 1)*a*a;
-			}
-			else if (D > 0)
-			{
-				T = 2 * D - (2 * x + 1)*b*b;
-			}
-
-			if (D < 0 && T <= 0)
-			{
-				x++;
-				D += (2 * x + 1)*b*b;
-			}
-			else if (D > 0 && T > 0)
-			{
-				y--;
-				D += (-2 * y + 1)*a*a;
-			}
-			else
-			{
-				x++; y--;
-				D += (2 * x + 1)*b*b + (-2 * y + 1)*a*a;
-			}
-
-			int xRefl = x - x0, yRefl = y - y0;
-
-
-		} while (y >= lim);
-
-		DrawingAreaPB->Refresh();
 	}
 
 	System::Void Drawer::SimpleDrawer::SeedLineFill(System::Drawing::Graphics ^ g, System::Drawing::Bitmap^ bm, System::Windows::Forms::PictureBox ^ DrawingAreaPB, const int & x0, const int & y0, System::Drawing::Color col)

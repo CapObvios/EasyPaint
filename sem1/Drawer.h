@@ -20,16 +20,6 @@ namespace Drawer
 			);
 
 			///<summary>
-			/// Get line pixels to be drawn
-			///</summary>
-			System::Collections::Generic::List<System::Drawing::Point>^ GetLinePixels(
-				const int & x1,
-				const int & y1,
-				const int & x2,
-				const int & y2
-			);
-
-			///<summary>
 			/// Draw a circle
 			///</summary>
 			System::Void DrawCircle(
@@ -39,6 +29,29 @@ namespace Drawer
 				const int& y0,
 				const int& R,
 				System::Drawing::Color col
+			);
+
+			///<summary>
+			/// drawn an ellipse
+			///</summary>
+			System::Void DrawEllipse(
+				System::Drawing::Graphics^ g,
+				System::Windows::Forms::PictureBox^ DrawingAreaPB,
+				const int& x0,
+				const int& y0,
+				const int& a,
+				const int& b,
+				System::Drawing::Color col
+			);
+
+			///<summary>
+			/// Get line pixels to be drawn
+			///</summary>
+			System::Collections::Generic::List<System::Drawing::Point>^ GetLinePixels(
+				const int & x1,
+				const int & y1,
+				const int & x2,
+				const int & y2
 			);
 
 			///<summary>
@@ -58,19 +71,6 @@ namespace Drawer
 				const int & y0, 
 				const int & a, 
 				const int & b
-			);
-
-			///<summary>
-			/// drawn an ellipse
-			///</summary>
-			System::Void DrawEllipse(
-				System::Drawing::Graphics^ g,
-				System::Windows::Forms::PictureBox^ DrawingAreaPB,
-				const int& x0,
-				const int& y0,
-				const int& a,
-				const int& b,
-				System::Drawing::Color col
 			);
 
 			///<summary>
