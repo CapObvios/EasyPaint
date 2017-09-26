@@ -324,7 +324,11 @@ System::Void sem1::MyForm::applyLongBuffer()
 	d->PaintPixelArray(g, DrawingAreaPB, longBuffer); //return pixels from the longterm buffer to the drawing area
 	longBuffer->Clear(); // clear the longterm pixel buffer
 
-	//TODO Draw longterm objects
+	//Draw longterm objects
+	for each (auto %geomObject in longBufferedObjects)
+	{
+		
+	}
 	
 	longBufferedObjects->Clear(); // clear the longterm buffered objects
 }
