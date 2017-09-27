@@ -1,3 +1,5 @@
+#include "Types.h"
+
 #pragma once
 
 namespace Drawer
@@ -83,6 +85,14 @@ namespace Drawer
 				const int& x0,
 				const int& y0,
 				System::Drawing::Color col
+			);
+
+			///<summary>
+			/// Fill picturebox with a given seed pixel
+			///</summary>
+			System::Collections::Generic::List<System::Drawing::Point>^ GetFillGeometryObjectsPixels(
+				System::Collections::Generic::List<GeometryTypes::IGeometry^>^ objects,
+				long& meanX
 			);
 
 			///<summary>

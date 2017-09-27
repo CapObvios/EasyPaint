@@ -132,12 +132,14 @@
   <ItemGroup>
     <ClCompile Include="Drawer.cpp" />
     <ClCompile Include="MyForm.cpp" />
+    <ClCompile Include="Types.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Drawer.h" />
     <ClInclude Include="MyForm.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="Types.h" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="MyForm.resx">

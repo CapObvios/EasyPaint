@@ -1,5 +1,6 @@
 ﻿#include "MyForm.h"  
 #include "Drawer.h"
+#include "Types.h"
 
 #include <Windows.h>
 
@@ -7,14 +8,17 @@
 
 using namespace sem1; //Windows Forms
 using namespace Drawer; // Drawing logic
+using namespace GeometryTypes; // Types used in the program
 
 /*
 		  Author:	Sergey Pavlov, BBI 141, 20.9.2017
 		Software:	VS 2015 Community. 
 			  OS:	Windows 10
 
-Seminar 1:
-Completed tasks:	Line, ellipse and circle drawing. Drawing logic is in the Drawer.cpp
+Completed tasks:
+
+	  Seminar 1:	Line, ellipse and circle drawing. Drawing logic is in the Drawer.cpp
+	  Seminar 2:	Seed filling
 */
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -36,9 +40,9 @@ sem1::MyForm::MyForm(void)
 	// Initializing required collections
 	buffer = gcnew System::Collections::Generic::Dictionary<Point, Color>();
 	longBuffer = gcnew System::Collections::Generic::Dictionary<Point, Color>();
-	longBufferedObjects = gcnew System::Collections::Generic::List<IGeometry^>();
+	longBufferedObjects = gcnew System::Collections::Generic::List<GeometryTypes::IGeometry^>();
 	
-	//Initializing picturebox items
+	//Initializing picturebox items and preparing it
 	bm = gcnew Bitmap(DrawingAreaPB->Width, DrawingAreaPB->Height);
 	DrawingAreaPB->Image = bm;
 	g = Graphics::FromImage(bm);
@@ -132,7 +136,7 @@ System::Void sem1::MyForm::handleDrawObject(const bool & isTemporary, const bool
 		pixels = d->GetLinePixels(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y);
 		if (isTemporary && isLongTerm)
 		{
-			addObjectToLongBuffer(Line(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y, drawingColor));
+			addObjectToLongBuffer(GeometryTypes::Line(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y, drawingColor));
 		}
 	}
 	else if (drawingMode == DrawingMode::circle)
@@ -144,7 +148,7 @@ System::Void sem1::MyForm::handleDrawObject(const bool & isTemporary, const bool
 		pixels = d->GetCirclePixels(pointStart.X, pointStart.Y, radius);
 		if (isTemporary && isLongTerm)
 		{
-			addObjectToLongBuffer(Circle(pointStart.X, pointStart.Y, radius, drawingColor));
+			addObjectToLongBuffer(GeometryTypes::Circle(pointStart.X, pointStart.Y, radius, drawingColor));
 		}
 	}
 	else if (drawingMode == DrawingMode::ellipse)
@@ -155,7 +159,7 @@ System::Void sem1::MyForm::handleDrawObject(const bool & isTemporary, const bool
 		pixels = d->GetEllipsePixels(pointStart.X, pointStart.Y, a, b);
 		if (isTemporary && isLongTerm)
 		{
-			addObjectToLongBuffer(Ellipse(pointStart.X, pointStart.Y, a, b, drawingColor));
+			addObjectToLongBuffer(GeometryTypes::Ellipse(pointStart.X, pointStart.Y, a, b, drawingColor));
 		}
 	}
 	else if (drawingMode == DrawingMode::polylines)
@@ -164,7 +168,7 @@ System::Void sem1::MyForm::handleDrawObject(const bool & isTemporary, const bool
 		
 		if (isTemporary && isLongTerm)
 		{
-			addObjectToLongBuffer(Line(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y, drawingColor));
+			addObjectToLongBuffer(GeometryTypes::Line(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y, drawingColor));
 		}
 
 		if (!isLongTerm)
@@ -297,6 +301,45 @@ System::Void sem1::MyForm::seedFillToolStripMenuItem_Click(System::Object ^ send
 	drawingMode = DrawingMode::seedFill;
 }
 
+System::Void sem1::MyForm::fillActiveFiguresToolStripMenuItem_Click(System::Object ^ sender, System::EventArgs ^ e)
+{
+	drawingMode = DrawingMode::none;
+
+	long centralLineX = 0;
+
+	auto seedPixels = d->GetFillGeometryObjectsPixels(longBufferedObjects, centralLineX);
+
+	System::Collections::Generic::Dictionary<Point, bool>^ pixelsToFill = gcnew System::Collections::Generic::Dictionary<Point, bool>();
+
+	for each(auto pixel in seedPixels)
+	{
+		int stepX = Math::Sign(centralLineX - pixel.X);
+		while (pixel.X != centralLineX)
+		{
+			if (!pixelsToFill->ContainsKey(pixel)) { pixelsToFill->Add(pixel, false); }
+			pixelsToFill[pixel] = !pixelsToFill[pixel];
+
+			pixel.X += stepX;
+
+			if (pixel.X == centralLineX && stepX < 0)
+			{				
+				if (!pixelsToFill->ContainsKey(pixel)) { pixelsToFill->Add(pixel, false); }
+				pixelsToFill[pixel] = !pixelsToFill[pixel];
+			}
+		}
+	}
+
+	for each (auto %pixelCandidate in pixelsToFill)
+	{
+		if (pixelCandidate.Value)
+		{
+			bm->SetPixel(pixelCandidate.Key.X, pixelCandidate.Key.Y, Color::Red);
+		}
+	}
+
+	DrawingAreaPB->Refresh();
+}
+
 System::Void sem1::MyForm::ColorMenuButton_Click(System::Object ^ sender, System::EventArgs ^ e)
 {
 	colorPicker->ShowDialog();
@@ -333,71 +376,9 @@ System::Void sem1::MyForm::applyLongBuffer()
 	longBufferedObjects->Clear(); // clear the longterm buffered objects
 }
 
-System::Void sem1::MyForm::addObjectToLongBuffer(IGeometry^ object)
+System::Void sem1::MyForm::addObjectToLongBuffer(GeometryTypes::IGeometry^ object)
 {
 	longBufferedObjects->Add(object);
 	if (longBufferedObjects->Count > 0)
 		applyButton->Enabled = true;
-}
-
-// Geometry implemetations definition
-
-System::Drawing::Point sem1::Line::GetStartPoint()
-{
-	return Point(X1, X2);
-}
-
-System::Drawing::Point sem1::Line::GetEndPoint()
-{
-	return Point(X2, Y2);
-}
-
-FigureType sem1::Line::GetFigureType()
-{
-	return FigureType::lineObj;
-}
-
-System::Drawing::Color sem1::Line::GetColor()
-{
-	return Color;
-}
-
-System::Drawing::Point sem1::Circle::GetStartPoint()
-{
-	return Point(X0, Y0);
-}
-
-System::Drawing::Point sem1::Circle::GetEndPoint()
-{
-	return Point(X0 + R, Y0);
-}
-
-FigureType sem1::Circle::GetFigureType()
-{
-	return FigureType::circleObj;
-}
-
-System::Drawing::Color sem1::Circle::GetColor()
-{
-	return Color;
-}
-
-System::Drawing::Point sem1::Ellipse::GetStartPoint()
-{
-	return Point(X0, Y0);
-}
-
-System::Drawing::Point sem1::Ellipse::GetEndPoint()
-{
-	return Point(X0 + A, Y0 + B);
-}
-
-FigureType sem1::Ellipse::GetFigureType()
-{
-	return FigureType::ellipseObj;
-}
-
-System::Drawing::Color sem1::Ellipse::GetColor()
-{
-	return Color;
 }

@@ -1,4 +1,5 @@
 #include "Drawer.h"
+#include "Types.h"
 
 #include <Windows.h>
 
@@ -192,6 +193,146 @@
 			}
 		}		
 		DrawingAreaPB->Refresh();
+	}
+
+	System::Collections::Generic::List<System::Drawing::Point>^ Drawer::SimpleDrawer::GetFillGeometryObjectsPixels(System::Collections::Generic::List<GeometryTypes::IGeometry^>^ objects, long& meanX)
+	{
+		List<Point>^ points = gcnew List<Point>();
+
+		GeometryTypes::Line polylineInitialLine;
+		bool isDrawingPolyline = false;
+		bool shouldAvoidPolylineInitialPoint = false;
+
+		for (size_t i = 0; i < objects->Count; i++)
+		{		
+			List<Point>^ curPoints = gcnew List<Point>();
+			//Get the figure lonely Y-axis pixels
+			if (objects[i]->GetFigureType() == GeometryTypes::FigureType::lineObj)
+			{
+				auto pStart = objects[i]->GetStartPoint();
+				auto pEnd = objects[i]->GetEndPoint();
+				curPoints = GetLinePixels(pStart.X, pStart.Y, pEnd.X, pEnd.Y);
+
+				if (!isDrawingPolyline) // we weren't drawing a polyline before
+				{
+					isDrawingPolyline = true;
+
+					polylineInitialLine.X1 = pStart.X;
+					polylineInitialLine.Y1 = pStart.Y;
+					polylineInitialLine.X2 = pEnd.X;
+					polylineInitialLine.Y2 = pEnd.Y;
+				}
+
+				// we got the initial polyline point
+				if (isDrawingPolyline && pEnd.Equals(polylineInitialLine.GetStartPoint()))
+				{
+					isDrawingPolyline = false; // end of polyline
+
+					int diff1 = pEnd.Y - pStart.Y, diff2 = pEnd.Y - polylineInitialLine.Y2;
+					if (Math::Sign(diff1) != Math::Sign(diff2))
+					{
+						shouldAvoidPolylineInitialPoint = true;
+					}
+					else
+					{
+						shouldAvoidPolylineInitialPoint = false;
+					}
+				}
+				else
+				{
+					// join lines
+					while (i + 1 < objects->Count && objects[i + 1]->GetFigureType() == GeometryTypes::FigureType::lineObj)
+					{
+						auto pNextStart = objects[i + 1]->GetStartPoint();
+						auto pNextEnd = objects[i + 1]->GetEndPoint();
+
+						if (pEnd.Equals(pNextStart))
+						{
+							// compare signs
+							int diff1 = pEnd.Y - pStart.Y, diff2 = pEnd.Y - pNextEnd.Y;
+							if (Math::Sign(diff1) != Math::Sign(diff2) && !(diff1 == 0 || diff2 == 0)) // signs differ => we need to join the points and then filter them, assuming pixels lay on one line
+							{
+								i++;
+								pStart = pNextStart;
+								pEnd = pNextEnd;
+
+								curPoints->AddRange(GetLinePixels(pStart.X, pStart.Y, pEnd.X, pEnd.Y));
+							}
+							else // signs are equal => we need to double the points, so we go further
+							{
+								break;
+							}
+						}
+						else if (isDrawingPolyline && pEnd.Equals(polylineInitialLine.GetStartPoint()))
+						{
+							isDrawingPolyline = false; // end of polyline
+
+							int diff1 = pEnd.Y - pStart.Y, diff2 = pEnd.Y - polylineInitialLine.Y2;
+							if (Math::Sign(diff1) != Math::Sign(diff2))
+							{
+								shouldAvoidPolylineInitialPoint = true;
+							}
+							else
+							{
+								shouldAvoidPolylineInitialPoint = false;
+							}
+							break;
+						}
+					}
+				}
+			}
+			else if (objects[i]->GetFigureType() == GeometryTypes::FigureType::circleObj)
+			{
+				auto circle = ((GeometryTypes::Circle)objects[i]);
+				curPoints = GetCirclePixels(circle.X0, circle.Y0, circle.R);
+			}
+			else if (objects[i]->GetFigureType() == GeometryTypes::FigureType::ellipseObj)
+			{
+				auto ellipse = ((GeometryTypes::Ellipse)objects[i]);
+				curPoints = GetEllipsePixels(ellipse.X0, ellipse.Y0, ellipse.A, ellipse.B);
+			}
+
+			//Filter them 
+			
+			Dictionary<int, Point> filtered;
+
+			for each (auto %pixel in curPoints)
+			{
+				if (objects[i]->GetFigureType() == GeometryTypes::FigureType::lineObj)
+				{
+					if (!filtered.ContainsKey(pixel.Y) && (!shouldAvoidPolylineInitialPoint || pixel.Y != polylineInitialLine.Y1))
+					{
+						filtered.Add(pixel.Y, pixel);
+						meanX += pixel.X;
+					}
+				}
+				else if (objects[i]->GetFigureType() == GeometryTypes::FigureType::circleObj || objects[i]->GetFigureType() == GeometryTypes::FigureType::ellipseObj)
+				{
+					auto centralPoint = objects[i]->GetStartPoint();
+
+					bool isLeftSide = !filtered.ContainsKey(pixel.Y) && pixel.X <= centralPoint.X;
+					bool isRightSide = !filtered.ContainsKey(pixel.Y + 2 * objects[i]->GetEndPoint().Y) && pixel.X > centralPoint.X;
+					
+					if (isLeftSide)
+					{
+						filtered.Add(pixel.Y, pixel);
+						meanX += pixel.X;
+					}
+					else if (isRightSide)
+					{
+						filtered.Add(pixel.Y + 2 * objects[i]->GetEndPoint().Y, pixel);
+						meanX += pixel.X;
+					}
+
+				}
+			}
+
+			points->AddRange(filtered.Values);
+		}
+
+		meanX /= points->Count;
+
+		return points;
 	}
 
 	System::Void Drawer::SimpleDrawer::PaintPixelArray(System::Drawing::Graphics ^ g, System::Windows::Forms::PictureBox ^ DrawingAreaPB, System::Collections::Generic::List<System::Drawing::Point>^ points, System::Drawing::Color col)
