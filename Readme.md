@@ -1,11 +1,11 @@
-#Computer graphics seminar
+# Computer graphics seminar
 
 Hereby you can see a school project evolving through the computer graphics classes.
 
 ## Seminar 1
 Simple line, circle and ellipse building. Color picker and clearing the screen included.
 
-##Seminar 2
+## Seminar 2
 Polyline drawing. Filling the screen with a seed pixel and by applying to a geometry shape - also being hard ones. 
 Color pickers number extended to 3: contours, filling and background colors.
 Two buffers implemented: short and long one. Both collect the values of replaced pixels at the time of drawing.
