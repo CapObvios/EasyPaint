@@ -258,17 +258,17 @@
 
 								curPoints->AddRange(GetLinePixels(pStart.X, pStart.Y, pEnd.X, pEnd.Y));
 							}
-							else // signs are equal => we need to double the points, so we go further
+							else // signs are equal => lines form an angle looking away from the perpendicular of the central line, so we need to double the points => we go to the next iteration
 							{
 								break;
 							}
 						}
-						else if (isDrawingPolyline && pEnd.Equals(polylineInitialLine.GetStartPoint()))
+						if (isDrawingPolyline && pEnd.Equals(polylineInitialLine.GetStartPoint()))
 						{
 							isDrawingPolyline = false; // end of polyline
 
 							int diff1 = pEnd.Y - pStart.Y, diff2 = pEnd.Y - polylineInitialLine.Y2;
-							if (Math::Sign(diff1) != Math::Sign(diff2))
+							if (Math::Sign(diff1) != Math::Sign(diff2) && !(diff1 == 0 || diff2 == 0))
 							{
 								shouldAvoidPolylineInitialPoint = true;
 							}
@@ -329,8 +329,7 @@
 
 			points->AddRange(filtered.Values);
 		}
-
-		meanX /= points->Count;
+		if (points->Count > 0) { meanX /= points->Count; }
 
 		return points;
 	}

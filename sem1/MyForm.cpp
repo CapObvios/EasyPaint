@@ -9,6 +9,8 @@
 using namespace sem1; //Windows Forms
 using namespace Drawer; // Drawing logic
 using namespace GeometryTypes; // Types used in the program
+using namespace System::Linq;
+using namespace System::Collections::Generic;
 
 /*
 		  Author:	Sergey Pavlov, BBI 141, 20.9.2017
@@ -36,6 +38,8 @@ sem1::MyForm::MyForm(void)
 	// Default values
 	applyButton->Enabled = false;
 	drawingColor = Color::Black;
+	fillingColor = Color::Red;
+	backgroundColor = Color::White;
 
 	// Initializing required collections
 	buffer = gcnew System::Collections::Generic::Dictionary<Point, Color>();
@@ -99,7 +103,7 @@ System::Void sem1::MyForm::DrawLine(const Line line, Color col)
 	d->DrawLine(g, DrawingAreaPB, line.X1, line.Y1, line.X2, line.Y2, col);
 }
 
-System::Void sem1::MyForm::drawPixelsAndHandleBuffer(System::Collections::Generic::List<Point>^ pixels, const bool & isTemporary, const bool & isLongTerm)
+System::Void sem1::MyForm::drawPixelsAndHandleBuffer(System::Collections::Generic::List<Point>^ pixels, const bool & isTemporary, const bool & isLongTerm, System::Drawing::Color col, const int & grain)
 {
 	d->PaintPixelArray(g, DrawingAreaPB, buffer); //return pixels from buffer to the drawing area
 	buffer->Clear(); // clear buffer
@@ -122,8 +126,17 @@ System::Void sem1::MyForm::drawPixelsAndHandleBuffer(System::Collections::Generi
 				longBuffer->Add(P, bm->GetPixel(P.X, P.Y));
 			}
 		}
-	}
-	d->PaintPixelArray(g, DrawingAreaPB, pixels, drawingColor); // transfer pixels to the drawing area
+
+		for (size_t i = 0; i < pixels->Count; i++)
+		{
+			if (i % grain < grain / 2)
+			{
+				pixels->RemoveAt(i);
+			}
+		}
+	}	
+
+	d->PaintPixelArray(g, DrawingAreaPB, pixels, col); // transfer pixels to the drawing area
 }
 
 System::Void sem1::MyForm::handleDrawObject(const bool & isTemporary, const bool & isLongTerm)
@@ -178,7 +191,7 @@ System::Void sem1::MyForm::handleDrawObject(const bool & isTemporary, const bool
 		}
 	}
 
-	drawPixelsAndHandleBuffer(pixels, isTemporary, isLongTerm); // draw pixels, received from a Drawer method
+	drawPixelsAndHandleBuffer(pixels, isTemporary, isLongTerm, drawingColor, 10); // draw pixels, received from a Drawer method
 }
 
 System::Void sem1::MyForm::pb_MouseDown(System::Object ^ sender, System::Windows::Forms::MouseEventArgs ^ e)
@@ -194,7 +207,7 @@ System::Void sem1::MyForm::pb_MouseDown(System::Object ^ sender, System::Windows
 	}
 	else if (drawingMode == DrawingMode::seedFill)
 	{
-		d->SeedLineFill(g, bm, DrawingAreaPB, pointStart.X, pointStart.Y, drawingColor);
+		d->SeedLineFill(g, bm, DrawingAreaPB, pointStart.X, pointStart.Y, fillingColor);
 	}
 }
 
@@ -258,11 +271,12 @@ System::Drawing::Point sem1::MyForm::getCurMousePBPosition()
 
 System::Void sem1::MyForm::ClearDrawingArea()
 {	
+	applyButton->Enabled = false;
 	buffer->Clear();
 	longBuffer->Clear();
 	longBufferedObjects->Clear();
 
-	g->Clear(Color::White);
+	g->Clear(backgroundColor);
 	DrawingAreaPB->Refresh();
 }
 
@@ -329,13 +343,19 @@ System::Void sem1::MyForm::fillActiveFiguresToolStripMenuItem_Click(System::Obje
 		}
 	}
 
+	auto pixelsForDrawing = gcnew List<System::Drawing::Point>();
+
 	for each (auto %pixelCandidate in pixelsToFill)
 	{
 		if (pixelCandidate.Value)
 		{
-			bm->SetPixel(pixelCandidate.Key.X, pixelCandidate.Key.Y, Color::Red);
+			pixelsForDrawing->Add(pixelCandidate.Key);
 		}
 	}
+	
+	drawPixelsAndHandleBuffer(pixelsForDrawing, false, true, fillingColor, 1);
+
+	applyLongBuffer();
 
 	DrawingAreaPB->Refresh();
 }
@@ -344,6 +364,20 @@ System::Void sem1::MyForm::ColorMenuButton_Click(System::Object ^ sender, System
 {
 	colorPicker->ShowDialog();
 	drawingColor = colorPicker->Color;
+}
+
+System::Void sem1::MyForm::fillColorToolStripMenuItem_Click(System::Object ^ sender, System::EventArgs ^ e)
+{
+	colorPicker->ShowDialog();
+	fillingColor = colorPicker->Color;
+}
+
+System::Void sem1::MyForm::backgroundColorToolStripMenuItem_Click(System::Object ^ sender, System::EventArgs ^ e)
+{
+	colorPicker->ShowDialog();
+	backgroundColor = colorPicker->Color;
+
+	ClearDrawingArea();
 }
 
 System::Void sem1::MyForm::AboutMenuButton_Click(System::Object ^ sender, System::EventArgs ^ e)
@@ -370,7 +404,25 @@ System::Void sem1::MyForm::applyLongBuffer()
 	//Draw longterm objects
 	for each (auto %geomObject in longBufferedObjects)
 	{
-		
+		List<System::Drawing::Point>^ pixels;
+
+		auto pStart = geomObject->GetStartPoint();
+		auto pEnd = geomObject->GetEndPoint();
+
+		if (geomObject->GetFigureType() == GeometryTypes::FigureType::lineObj)
+		{
+			pixels = d->GetLinePixels(pStart.X, pStart.Y, pEnd.X, pEnd.Y);
+		}
+		else if (geomObject->GetFigureType() == GeometryTypes::FigureType::circleObj)
+		{
+			pixels = d->GetCirclePixels(pStart.X, pStart.Y, Math::Max(Math::Abs(pEnd.X - pStart.X), Math::Abs(pEnd.Y - pStart.Y)));
+		}
+		else if (geomObject->GetFigureType() == GeometryTypes::FigureType::ellipseObj)
+		{
+			pixels = d->GetEllipsePixels(pStart.X, pStart.Y, Math::Abs(pEnd.X - pStart.X), Math::Abs(pEnd.Y - pStart.Y));
+		}
+
+		drawPixelsAndHandleBuffer(pixels, false, false, drawingColor, 1);
 	}
 	
 	longBufferedObjects->Clear(); // clear the longterm buffered objects
