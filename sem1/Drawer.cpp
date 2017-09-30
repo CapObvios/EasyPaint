@@ -310,7 +310,7 @@
 				{
 					auto centralPoint = objects[i]->GetStartPoint();
 
-					bool isLeftSide = !filtered.ContainsKey(pixel.Y) && pixel.X <= centralPoint.X;
+					bool isLeftSide = !filtered.ContainsKey(pixel.Y) && pixel.X < centralPoint.X;
 					bool isRightSide = !filtered.ContainsKey(pixel.Y + 2 * objects[i]->GetEndPoint().Y) && pixel.X > centralPoint.X;
 					
 					if (isLeftSide)
