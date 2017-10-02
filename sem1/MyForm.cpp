@@ -54,39 +54,39 @@ sem1::MyForm::MyForm(void)
 		
 	// Draw some sample data with custom and standard drawing functions to compare
 
-	Pen^ stdFuncsPen = gcnew Pen(Color::Red);	
-	//custom lines
-	d->DrawLine(g, DrawingAreaPB,100, 100, 150, 90 , Color::Black);
-	d->DrawLine(g, DrawingAreaPB,100, 100, 150, 110, Color::Black);
-	d->DrawLine(g, DrawingAreaPB,100, 100, 50, 90  , Color::Black);
-	d->DrawLine(g, DrawingAreaPB,100, 100, 50, 110 , Color::Black);
-	d->DrawLine(g, DrawingAreaPB,100, 100, 110, 150, Color::Black);
-	d->DrawLine(g, DrawingAreaPB,100, 100, 90, 150 , Color::Black);
-	d->DrawLine(g, DrawingAreaPB,100, 100, 110, 50 , Color::Black);
-	d->DrawLine(g, DrawingAreaPB,100, 100, 90, 50  , Color::Black);
-	//built-in lines
-	g->DrawLine(stdFuncsPen, 200, 100, 250, 90);
-	g->DrawLine(stdFuncsPen, 200, 100, 250, 110);
-	g->DrawLine(stdFuncsPen, 200, 100, 150, 90);
-	g->DrawLine(stdFuncsPen, 200, 100, 150, 110);
-	g->DrawLine(stdFuncsPen, 200, 100, 210, 150);
-	g->DrawLine(stdFuncsPen, 200, 100, 190, 150);
-	g->DrawLine(stdFuncsPen, 200, 100, 210, 50);
-	g->DrawLine(stdFuncsPen, 200, 100, 190, 50);
+	//Pen^ stdFuncsPen = gcnew Pen(Color::Red);	
+	////custom lines
+	//d->DrawLine(g, DrawingAreaPB,100, 100, 150, 90 , Color::Black);
+	//d->DrawLine(g, DrawingAreaPB,100, 100, 150, 110, Color::Black);
+	//d->DrawLine(g, DrawingAreaPB,100, 100, 50, 90  , Color::Black);
+	//d->DrawLine(g, DrawingAreaPB,100, 100, 50, 110 , Color::Black);
+	//d->DrawLine(g, DrawingAreaPB,100, 100, 110, 150, Color::Black);
+	//d->DrawLine(g, DrawingAreaPB,100, 100, 90, 150 , Color::Black);
+	//d->DrawLine(g, DrawingAreaPB,100, 100, 110, 50 , Color::Black);
+	//d->DrawLine(g, DrawingAreaPB,100, 100, 90, 50  , Color::Black);
+	////built-in lines
+	//g->DrawLine(stdFuncsPen, 200, 100, 250, 90);
+	//g->DrawLine(stdFuncsPen, 200, 100, 250, 110);
+	//g->DrawLine(stdFuncsPen, 200, 100, 150, 90);
+	//g->DrawLine(stdFuncsPen, 200, 100, 150, 110);
+	//g->DrawLine(stdFuncsPen, 200, 100, 210, 150);
+	//g->DrawLine(stdFuncsPen, 200, 100, 190, 150);
+	//g->DrawLine(stdFuncsPen, 200, 100, 210, 50);
+	//g->DrawLine(stdFuncsPen, 200, 100, 190, 50);
 
-	//custom circles
-	d->DrawCircle(g, DrawingAreaPB, 100, 200, 15, Color::Black);
-	d->DrawCircle(g, DrawingAreaPB, 100, 200, 25, Color::Black);
-	//built-in circles
-	g->DrawEllipse(stdFuncsPen, 185, 185, 30, 30);
-	g->DrawEllipse(stdFuncsPen, 175, 175, 50, 50);
+	////custom circles
+	//d->DrawCircle(g, DrawingAreaPB, 100, 200, 15, Color::Black);
+	//d->DrawCircle(g, DrawingAreaPB, 100, 200, 25, Color::Black);
+	////built-in circles
+	//g->DrawEllipse(stdFuncsPen, 185, 185, 30, 30);
+	//g->DrawEllipse(stdFuncsPen, 175, 175, 50, 50);
 
-	//custom ellipses
-	d->DrawEllipse(g, DrawingAreaPB, 300, 100, 30, 60, Color::Black);
-	d->DrawEllipse(g, DrawingAreaPB, 300, 100, 60, 30, Color::Black);
-	//built-in ellipses
-	g->DrawEllipse(stdFuncsPen, 270, 140, 60, 120);
-	g->DrawEllipse(stdFuncsPen, 240, 170, 120, 60);
+	////custom ellipses
+	//d->DrawEllipse(g, DrawingAreaPB, 300, 100, 30, 60, Color::Black);
+	//d->DrawEllipse(g, DrawingAreaPB, 300, 100, 60, 30, Color::Black);
+	////built-in ellipses
+	//g->DrawEllipse(stdFuncsPen, 270, 140, 60, 120);
+	//g->DrawEllipse(stdFuncsPen, 240, 170, 120, 60);
 }
 
 sem1::MyForm::~MyForm()
@@ -127,6 +127,7 @@ System::Void sem1::MyForm::drawPixelsAndHandleBuffer(System::Collections::Generi
 			}
 		}
 
+		// Apply grain
 		for (size_t i = 0; i < pixels->Count; i++)
 		{
 			if (i % grain < grain / 2)
@@ -190,6 +191,10 @@ System::Void sem1::MyForm::handleDrawObject(const bool & isTemporary, const bool
 			pixels->AddRange(helpingCirclePixels);
 		}
 	}
+	else if (drawingMode == DrawingMode::cropRect)
+	{
+		pixels = d->GetRectanglePixels(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y);
+	}
 
 	drawPixelsAndHandleBuffer(pixels, isTemporary, isLongTerm, drawingColor, 10); // draw pixels, received from a Drawer method
 }
@@ -219,6 +224,13 @@ System::Void sem1::MyForm::pb_MouseUp(System::Object ^ sender, System::Windows::
 		pointEnd = getCurMousePBPosition();
 		handleDrawObject(true, true);
 	}
+	else if (drawingMode == DrawingMode::cropRect)
+	{
+		pointEnd = getCurMousePBPosition();
+		handleDrawObject(true, true);
+
+		CheckLinesCropping();
+	}
 	else if (drawingMode == DrawingMode::polylines)
 	{		
 		if (!isPolylineBeingDrawn) 
@@ -246,7 +258,7 @@ System::Void sem1::MyForm::pb_MouseUp(System::Object ^ sender, System::Windows::
 
 System::Void sem1::MyForm::DrawingAreaPB_MouseMove(System::Object ^ sender, System::Windows::Forms::MouseEventArgs ^ e)
 {
-	if (isMouseDown && (drawingMode == DrawingMode::line || drawingMode == DrawingMode::circle || drawingMode == DrawingMode::ellipse))
+	if (isMouseDown && (drawingMode == DrawingMode::line || drawingMode == DrawingMode::circle || drawingMode == DrawingMode::ellipse || drawingMode == DrawingMode::cropRect))
 	{
 		pointEnd = getCurMousePBPosition();
 		handleDrawObject(true, false);
@@ -317,44 +329,13 @@ System::Void sem1::MyForm::seedFillToolStripMenuItem_Click(System::Object ^ send
 
 System::Void sem1::MyForm::fillActiveFiguresToolStripMenuItem_Click(System::Object ^ sender, System::EventArgs ^ e)
 {
-	drawingMode = DrawingMode::none;
-
-	long centralLineX = 0;
-
-	auto seedPixels = d->GetFillGeometryObjectsPixels(longBufferedObjects, centralLineX);
-
-	System::Collections::Generic::Dictionary<Point, bool>^ pixelsToFill = gcnew System::Collections::Generic::Dictionary<Point, bool>();
-
-	for each(auto pixel in seedPixels)
-	{
-		int stepX = Math::Sign(centralLineX - pixel.X);
-		while (pixel.X != centralLineX)
-		{
-			if (!pixelsToFill->ContainsKey(pixel)) { pixelsToFill->Add(pixel, false); }
-			pixelsToFill[pixel] = !pixelsToFill[pixel];
-
-			pixel.X += stepX;
-
-			if (pixel.X == centralLineX && stepX < 0)
-			{				
-				if (!pixelsToFill->ContainsKey(pixel)) { pixelsToFill->Add(pixel, false); }
-				pixelsToFill[pixel] = !pixelsToFill[pixel];
-			}
-		}
-	}
-
-	auto pixelsForDrawing = gcnew List<System::Drawing::Point>();
-
-	for each (auto %pixelCandidate in pixelsToFill)
-	{
-		if (pixelCandidate.Value)
-		{
-			pixelsForDrawing->Add(pixelCandidate.Key);
-		}
-	}
+	// Get the pixels to fill all buffered objects
+	auto pixelsForDrawing = d->GetFillGeometryObjectPixels(longBufferedObjects);
 	
+	// Transfer to the picturebox
 	drawPixelsAndHandleBuffer(pixelsForDrawing, false, true, fillingColor, 1);
 
+	// Draw existing borders
 	applyLongBuffer();
 
 	DrawingAreaPB->Refresh();
@@ -382,12 +363,14 @@ System::Void sem1::MyForm::backgroundColorToolStripMenuItem_Click(System::Object
 
 System::Void sem1::MyForm::AboutMenuButton_Click(System::Object ^ sender, System::EventArgs ^ e)
 {
-	MessageBox::Show("Проект 1. Алгоритмы Брезенхема.\nАвтор: Павлов Сергей Юрьевич\nГруппа: ББИ141" +
-		"\nПрограмма отрисовывает линии и круги по зажатию левой кнопки мыши." +
-		"\nПри рисовании эллипса необходимо выбрать цифры вверху окна - его радиусы." +
-		"\nРисуется по нажатию левой кнопки мыши" +
-		"\nВыбор цвета в пункте меню \"Рисование\"" +
-		"\nОчистить поле для рисования можно в пункте меню \"Главная\"");
+	MessageBox::Show("Project SuperPaint 2.0 Filling.\nAuthor: Sergey Pavlov\nGroup: BBI 141" +
+		"\nOne may draw lines, circles and ellipses by pressing holding left mouse button." +
+		"\nClosed polyline figures are being drawn by clicking LMB on a drawing area. The last point should be placed at the position of the very first figure point marked with the circle." +
+		"\nAll the drawn figures will at first be put to a buffer. One can apply them by clicking the \"Apply\" button." +
+		"\nIn the \"Fill\" menu strip one can find 2 different ways of filling figures. First one is a simple seed filling which one should use when all of the figures are applied." +
+		"\nThe second filling method fills in all of the closed figures which haven't yet been applied. Filling them this way will automatically apply them." +
+		"\nColor is picked in a \"Color\" menu strip. Changing the background color will clear the drawing area." +
+		"\nYou can clear the drawing are in a menu strip \"Drawing\"");
 }
 
 System::Void sem1::MyForm::applyButton_Click(System::Object ^ sender, System::EventArgs ^ e)
@@ -433,4 +416,30 @@ System::Void sem1::MyForm::addObjectToLongBuffer(GeometryTypes::IGeometry^ objec
 	longBufferedObjects->Add(object);
 	if (longBufferedObjects->Count > 0)
 		applyButton->Enabled = true;
+}
+
+System::Void sem1::MyForm::cropActiveLinesToolStripMenuItem_Click(System::Object ^ sender, System::EventArgs ^ e)
+{
+	drawingMode = DrawingMode::cropRect;
+}
+
+System::Void sem1::MyForm::CheckLinesCropping()
+{
+	int minX = Math::Min(pointStart.X, pointEnd.X),
+		maxX = Math::Max(pointStart.X, pointEnd.X),
+		minY = Math::Min(pointStart.Y, pointEnd.Y),
+		maxY = Math::Max(pointStart.Y, pointEnd.Y);
+
+	auto pixelsDict = d->GetCropPixels(longBufferedObjects, minX, minY, maxX, maxY);
+
+	d->PaintPixelArray(g, DrawingAreaPB, longBuffer); //return pixels from the longterm buffer to the drawing area
+
+	longBuffer->Clear(); // clear the longterm pixel buffer
+
+	drawPixelsAndHandleBuffer(pixelsDict[(int)GeometryTypes::VisibilityType::invisible], true, true, Color::Gray, 10);
+	drawPixelsAndHandleBuffer(pixelsDict[(int)GeometryTypes::VisibilityType::invisiblePart], true, true, Color::Orange, 10);
+	drawPixelsAndHandleBuffer(pixelsDict[(int)GeometryTypes::VisibilityType::visible], true, true, Color::Green, 10);
+
+	auto rectPixels = d->GetRectanglePixels(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y);
+	drawPixelsAndHandleBuffer(rectPixels, true, true, Color::Black, 10);
 }

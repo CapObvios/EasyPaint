@@ -76,6 +76,16 @@ namespace Drawer
 			);
 
 			///<summary>
+			/// Get rectangle pixels
+			///</summary>
+			System::Collections::Generic::List<System::Drawing::Point>^ Drawer::SimpleDrawer::GetRectanglePixels(
+				const int & x1,
+				const int & y1,
+				const int & x2,
+				const int & y2
+			);
+
+			///<summary>
 			/// Fill picturebox with a given seed pixel
 			///</summary>
 			System::Void SeedLineFill(
@@ -88,11 +98,37 @@ namespace Drawer
 			);
 
 			///<summary>
-			/// Fill picturebox with a given seed pixel
+			/// Get given geometry figures seed pixels for XOR-like filling and mean of X-coord
 			///</summary>
-			System::Collections::Generic::List<System::Drawing::Point>^ GetFillGeometryObjectsPixels(
+			System::Collections::Generic::List<System::Drawing::Point>^ GetFillGeometryObjectsSeedPixels(
 				System::Collections::Generic::List<GeometryTypes::IGeometry^>^ objects,
 				long& meanX
+			);
+
+			///<summary>
+			/// Get pixels to fill with a XOR-like method based on the seed-pixels and central line
+			///</summary>
+			System::Collections::Generic::List<System::Drawing::Point>^ GetFillGeometryObjectPixelsBySeed(
+				System::Collections::Generic::List<System::Drawing::Point>^ seedPixels,
+				long& centralLineX
+			);
+
+			///<summary>
+			/// Get aproximate pixels to fill in the give geometry objects
+			///</summary>
+			System::Collections::Generic::List<System::Drawing::Point>^ GetFillGeometryObjectPixels(
+				System::Collections::Generic::List<GeometryTypes::IGeometry^>^ objects
+			);
+
+			///<summary>
+			/// Get pixels, sorted based on their visibility after they're cropped
+			///</summary>
+			System::Collections::Generic::Dictionary<int, System::Collections::Generic::List<System::Drawing::Point>^>^ GetCropPixels(
+				System::Collections::Generic::List<GeometryTypes::IGeometry^>^% objects,
+				const int & x1,
+				const int & y1,
+				const int & x2,
+				const int & y2
 			);
 
 			///<summary>
@@ -106,12 +142,31 @@ namespace Drawer
 			);
 
 			///<summary>
-			/// Transfer given pixel-color dictionary values to a drawing are
+			/// Transfer given pixel-color dictionary values to a drawing area
 			///</summary>
 			System::Void PaintPixelArray(
 				System::Drawing::Graphics^ g,
 				System::Windows::Forms::PictureBox^ DrawingAreaPB,
 				System::Collections::Generic::Dictionary<System::Drawing::Point, System::Drawing::Color>^ points
+			);
+
+	private:
+			///<summary>
+			/// Know if a point is inside the rectangle formed by given opposite vertices points
+			///</summary>
+			bool isPointInsideRect(
+				System::Drawing::Point p,
+				const int& x1,
+				const int& y1,
+				const int& x2,
+				const int& y2
+			);
+			
+			///<summary>
+			/// 
+			///</summary>
+			static System::Void SortPointList(
+				System::Collections::Generic::List<System::Drawing::Point>^ points
 			);
 	};
 }

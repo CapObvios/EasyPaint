@@ -9,6 +9,8 @@
 	using namespace System::Windows::Forms;
 	using namespace Drawer;
 	using namespace System::Collections::Generic;
+	using namespace System::Linq;
+	using namespace System::Runtime::CompilerServices;
 
 	System::Void Drawer::SimpleDrawer::DrawLine(System::Drawing::Graphics ^ g, System::Windows::Forms::PictureBox ^ DrawingAreaPB, const int & x1, const int & y1, const int & x2, const int & y2, System::Drawing::Color col)
 	{		
@@ -137,6 +139,25 @@
 		return points;
 	}
 
+	System::Collections::Generic::List<System::Drawing::Point>^ Drawer::SimpleDrawer::GetRectanglePixels(const int & x1, const int & y1, const int & x2, const int & y2)
+	{
+		auto pixels = gcnew List<Point>();
+
+		for (size_t i = Math::Min(x1,x2); i <= Math::Max(x1, x2); i++)
+		{
+			pixels->Add(Point(i, y1));
+			pixels->Add(Point(i, y2));
+		}
+
+		for (size_t j = Math::Min(y1, y2)+1; j < Math::Max(y1, y2); j++)
+		{
+			pixels->Add(Point(x1, j));
+			pixels->Add(Point(x2, j));
+		}
+
+		return pixels;		
+	}
+
 	System::Void Drawer::SimpleDrawer::SeedLineFill(System::Drawing::Graphics ^ g, System::Drawing::Bitmap^ bm, System::Windows::Forms::PictureBox ^ DrawingAreaPB, const int & x0, const int & y0, System::Drawing::Color col)
 	{
 		SolidBrush^ brush = gcnew SolidBrush(col);
@@ -195,7 +216,7 @@
 		DrawingAreaPB->Refresh();
 	}
 
-	System::Collections::Generic::List<System::Drawing::Point>^ Drawer::SimpleDrawer::GetFillGeometryObjectsPixels(System::Collections::Generic::List<GeometryTypes::IGeometry^>^ objects, long& meanX)
+	System::Collections::Generic::List<System::Drawing::Point>^ Drawer::SimpleDrawer::GetFillGeometryObjectsSeedPixels(System::Collections::Generic::List<GeometryTypes::IGeometry^>^ objects, long& meanX)
 	{
 		List<Point>^ points = gcnew List<Point>();
 
@@ -216,6 +237,7 @@
 				if (!isDrawingPolyline) // we weren't drawing a polyline before
 				{
 					isDrawingPolyline = true;
+					shouldAvoidPolylineInitialPoint = false;
 
 					polylineInitialLine.X1 = pStart.X;
 					polylineInitialLine.Y1 = pStart.Y;
@@ -229,14 +251,8 @@
 					isDrawingPolyline = false; // end of polyline
 
 					int diff1 = pEnd.Y - pStart.Y, diff2 = pEnd.Y - polylineInitialLine.Y2;
-					if (Math::Sign(diff1) != Math::Sign(diff2))
-					{
-						shouldAvoidPolylineInitialPoint = true;
-					}
-					else
-					{
-						shouldAvoidPolylineInitialPoint = false;
-					}
+					if (Math::Sign(diff1) != Math::Sign(diff2) && !(diff1 == 0 || diff2 == 0)) shouldAvoidPolylineInitialPoint = true;
+					else shouldAvoidPolylineInitialPoint = false; 
 				}
 				else
 				{
@@ -268,14 +284,9 @@
 							isDrawingPolyline = false; // end of polyline
 
 							int diff1 = pEnd.Y - pStart.Y, diff2 = pEnd.Y - polylineInitialLine.Y2;
-							if (Math::Sign(diff1) != Math::Sign(diff2) && !(diff1 == 0 || diff2 == 0))
-							{
-								shouldAvoidPolylineInitialPoint = true;
-							}
-							else
-							{
-								shouldAvoidPolylineInitialPoint = false;
-							}
+							if (Math::Sign(diff1) != Math::Sign(diff2) && !(diff1 == 0 || diff2 == 0)) shouldAvoidPolylineInitialPoint = true;
+							else shouldAvoidPolylineInitialPoint = false; 
+
 							break;
 						}
 					}
@@ -310,7 +321,7 @@
 				{
 					auto centralPoint = objects[i]->GetStartPoint();
 
-					bool isLeftSide = !filtered.ContainsKey(pixel.Y) && pixel.X <= centralPoint.X;
+					bool isLeftSide = !filtered.ContainsKey(pixel.Y) && pixel.X < centralPoint.X;
 					bool isRightSide = !filtered.ContainsKey(pixel.Y + 2 * objects[i]->GetEndPoint().Y) && pixel.X > centralPoint.X;
 					
 					if (isLeftSide)
@@ -334,6 +345,143 @@
 		return points;
 	}
 
+	System::Collections::Generic::List<System::Drawing::Point>^ Drawer::SimpleDrawer::GetFillGeometryObjectPixelsBySeed(System::Collections::Generic::List<System::Drawing::Point>^ seedPixels, long & centralLineX)
+	{
+		//Decide which pixels should be filled
+		System::Collections::Generic::Dictionary<Point, bool>^ pixelsToFill = gcnew System::Collections::Generic::Dictionary<Point, bool>();
+
+		for each(auto pixel in seedPixels)
+		{
+			int stepX = Math::Sign(centralLineX - pixel.X);
+			while (pixel.X != centralLineX)
+			{
+				if (!pixelsToFill->ContainsKey(pixel)) { pixelsToFill->Add(pixel, true); }
+				else { pixelsToFill[pixel] = !pixelsToFill[pixel]; }
+				pixel.X += stepX;
+			}
+
+			if (pixel.X == centralLineX && stepX < 0)
+			{
+				if (!pixelsToFill->ContainsKey(pixel)) { pixelsToFill->Add(pixel, true); }
+				else { pixelsToFill[pixel] = !pixelsToFill[pixel]; }
+			}
+		}
+
+		//Leave only pixels, which should be filled
+		auto pixelsForDrawing = gcnew List<System::Drawing::Point>();
+
+		for each (auto %pixelCandidate in pixelsToFill)
+		{
+			if (pixelCandidate.Value)
+			{
+				pixelsForDrawing->Add(pixelCandidate.Key);
+			}
+		}
+
+		return pixelsForDrawing;
+	}
+
+	System::Collections::Generic::List<System::Drawing::Point>^ Drawer::SimpleDrawer::GetFillGeometryObjectPixels(System::Collections::Generic::List<GeometryTypes::IGeometry^>^ objects)
+	{
+		// Get seed pixels and mean value
+		long centralLineX = 0;
+		auto seedPixels = GetFillGeometryObjectsSeedPixels(objects, centralLineX);
+
+		// Get pixels to fill by seed pixels
+		auto pixelsForDrawing = GetFillGeometryObjectPixelsBySeed(seedPixels, centralLineX);
+
+		return pixelsForDrawing;
+	}
+
+	System::Collections::Generic::Dictionary<int, System::Collections::Generic::List<System::Drawing::Point>^>^ Drawer::SimpleDrawer::GetCropPixels(System::Collections::Generic::List<GeometryTypes::IGeometry^>^% objects, const int & x1, const int & y1, const int & x2, const int & y2)
+	{
+		// initialize the dictionary
+		Dictionary<int, List<Point>^>^ pixels = gcnew Dictionary<int, List<Point>^>();
+		pixels->Add((int)GeometryTypes::VisibilityType::visible, gcnew List<Point>);
+		pixels->Add((int)GeometryTypes::VisibilityType::invisiblePart , gcnew List<Point>);
+		pixels->Add((int)GeometryTypes::VisibilityType::invisible, gcnew List<Point>);
+
+		List<GeometryTypes::IGeometry^>^ croppedLines = gcnew List<GeometryTypes::IGeometry^>();
+
+		for each (auto geometryFigure in objects)
+		{
+			if (geometryFigure->GetFigureType() == GeometryTypes::FigureType::lineObj)
+			{
+				auto pStart = geometryFigure->GetStartPoint();
+				auto pEnd = geometryFigure->GetEndPoint();
+
+				Byte pCode = 0;
+
+				if (pStart.X < x1) pCode |= 1;
+				if (pStart.X > x2) pCode |= 2;
+				if (pStart.Y < y1) pCode |= 4;
+				if (pStart.Y > y2) pCode |= 8;
+
+				if (pEnd.X < x1) pCode |= 16;
+				if (pEnd.X > x2) pCode |= 32;
+				if (pEnd.Y < y1) pCode |= 64;
+				if (pEnd.Y > y2) pCode |= 128;
+
+				if (pCode == 0) // completely visible
+				{
+					pixels[(int)GeometryTypes::VisibilityType::visible]->AddRange(GetLinePixels(pStart.X, pStart.Y, pEnd.X, pEnd.Y));
+					croppedLines->Add(geometryFigure);
+				}
+				else if ((pCode & (pCode >> 4)) > 0)// completely invisible
+				{
+					pixels[(int)GeometryTypes::VisibilityType::invisible]->AddRange(GetLinePixels(pStart.X, pStart.Y, pEnd.X, pEnd.Y));
+				}
+				else
+				{
+					List<Point>^ linePoints = gcnew List<Point>();
+					linePoints->Add(pStart); linePoints->Add(pEnd);
+
+					//double m = (diffY) / (double)(diffX);
+					//double m = (pEnd.Y - pStart.Y) / (double)(pEnd.X - pStart.X);
+
+					//int yL = m*(x1 - pStart.X) + pStart.Y,
+					//	yR = m*(x2 - pStart.X) + pStart.Y,
+					//	xT = (1 / m)*(y1 - pStart.Y) + pStart.X,
+					//	xB = (1 / m)*(y2 - pStart.Y) + pStart.X;
+
+					int diffY = pEnd.Y - pStart.Y,
+						diffX = pEnd.X - pStart.X;
+
+					int yL = diffX == 0 ? 0 : (diffY*(x1 - pStart.X))/diffX + pStart.Y,
+						yR = diffX == 0 ? 0 : (diffY*(x2 - pStart.X))/diffX + pStart.Y,
+											  
+						xT = diffY == 0 ? 0 : (diffX*(y1 - pStart.Y))/diffY + pStart.X,
+						xB = diffY == 0 ? 0 : (diffX*(y2 - pStart.Y))/diffY + pStart.X;
+
+					if (diffX !=0 && yL > y1 && yL < y2 && yL >= Math::Min(pStart.Y, pEnd.Y) && yL <= Math::Max(pStart.Y, pEnd.Y)) { linePoints->Add(Point(x1, yL)); }
+					if (diffX !=0 && yR > y1 && yR < y2 && yR >= Math::Min(pStart.Y, pEnd.Y) && yR <= Math::Max(pStart.Y, pEnd.Y)) { linePoints->Add(Point(x2, yR)); }
+
+					if (diffY != 0 && xT > x1 && xT < x2 && xT >= Math::Min(pStart.X, pEnd.X) && xT <= Math::Max(pStart.X, pEnd.X)) { linePoints->Add(Point(xT, y1)); }
+					if (diffY != 0 && xB > x1 && xB < x2 && xB >= Math::Min(pStart.X, pEnd.X) && xB <= Math::Max(pStart.X, pEnd.X)) { linePoints->Add(Point(xB, y2)); }
+					SortPointList(linePoints);
+					int linePointsCount = linePoints->Count;
+					for (int i = 0; i < linePointsCount -1; i++)
+					{
+						if (isPointInsideRect(linePoints[i], x1, y1, x2, y2) && isPointInsideRect(linePoints[i + 1], x1, y1, x2, y2))
+						{
+							pixels[(int)GeometryTypes::VisibilityType::visible]->AddRange(GetLinePixels(linePoints[i].X, linePoints[i].Y, linePoints[i + 1].X, linePoints[i + 1].Y));
+							
+							croppedLines->Add(gcnew GeometryTypes::Line(linePoints[i].X, linePoints[i].Y, linePoints[i + 1].X, linePoints[i + 1].Y, ((GeometryTypes::Line)geometryFigure).Color));
+						}
+						else
+						{
+							pixels[(int)GeometryTypes::VisibilityType::invisiblePart]->AddRange(GetLinePixels(linePoints[i].X, linePoints[i].Y, linePoints[i + 1].X, linePoints[i + 1].Y));
+						}
+					}					
+				}
+			}
+		}
+
+		objects = croppedLines;
+
+		return pixels;
+	}
+
 	System::Void Drawer::SimpleDrawer::PaintPixelArray(System::Drawing::Graphics ^ g, System::Windows::Forms::PictureBox ^ DrawingAreaPB, System::Collections::Generic::List<System::Drawing::Point>^ points, System::Drawing::Color col)
 	{
 		SolidBrush^ br = gcnew SolidBrush(col);
@@ -355,4 +503,32 @@
 			g->FillRectangle(br, pt.Key.X, pt.Key.Y, 1, 1);
 		}
 		DrawingAreaPB->Refresh();
+	}
+
+// Private
+
+	bool Drawer::SimpleDrawer::isPointInsideRect(System::Drawing::Point p, const int & x1, const int & y1, const int & x2, const int & y2)
+	{
+		if (p.X >= x1 && p.X <= x2 && p.Y >= y1 && p.Y <= y2) 
+			return true;
+
+		return false;
+	}
+
+	System::Void Drawer::SimpleDrawer::SortPointList(System::Collections::Generic::List<System::Drawing::Point>^ points)
+	{
+		for (size_t i = 0; i < points->Count - 1; i++)
+		{
+			for (size_t j = 0; j < points->Count - i -1; j++)
+			{
+				if (points[j].X > points[j + 1].X
+					|| points[j].X == points[j + 1].X && points[j].Y > points[j + 1].Y)
+				{
+					auto temp = points[j];
+					points[j] = points[j + 1];
+					points[j + 1] = temp;
+				}
+
+			}
+		}
 	}

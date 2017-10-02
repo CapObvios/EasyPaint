@@ -2,7 +2,14 @@
 
 namespace GeometryTypes
 {
-	enum FigureType
+	enum struct VisibilityType
+	{
+		visible,
+		invisiblePart,
+		invisible
+	};
+
+	enum class FigureType
 	{
 		lineObj = 0,
 		circleObj = 2,

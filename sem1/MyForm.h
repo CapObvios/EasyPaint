@@ -22,7 +22,8 @@ namespace sem1 {
 		circle = 2,
 		ellipse = 3,
 		seedFill = 4,
-		polylines = 5
+		polylines = 5,
+		cropRect = 6
 	};
 
 	/// <summary>
@@ -45,12 +46,18 @@ namespace sem1 {
 		System::Windows::Forms::ToolStripMenuItem^  colorToolStripMenuItem;
 		System::Windows::Forms::ToolStripMenuItem^  colorToolStripMenuItem1;
 		System::Windows::Forms::ToolStripMenuItem^  polylineFigureToolStripMenuItem;
+		System::Windows::Forms::ToolStripMenuItem^  fillActiveFiguresToolStripMenuItem;
+		System::Windows::Forms::ToolStripMenuItem^  fillColorToolStripMenuItem;
+		System::Windows::Forms::ToolStripMenuItem^  backgroundColorToolStripMenuItem;
+		System::Windows::Forms::ToolStripMenuItem^  transformToolStripMenuItem;
+		System::Windows::Forms::ToolStripMenuItem^  modifyActiveFiguresToolStripMenuItem;
+		System::Windows::Forms::ToolStripMenuItem^  cropActiveLinesToolStripMenuItem;
+		System::Windows::Forms::ToolStripSeparator^  toolStripSeparator2;
+		System::Windows::Forms::ToolStripSeparator^  toolStripSeparator1;
 
 		System::Windows::Forms::ColorDialog^  colorPicker;
 		System::Windows::Forms::PictureBox^  DrawingAreaPB;
-
 		System::Windows::Forms::Button^  applyButton;
-
 
 		System::Drawing::Bitmap^ bm;
 		System::Drawing::Graphics^ g;
@@ -66,12 +73,8 @@ namespace sem1 {
 
 		bool isMouseDown;
 		bool isPolylineBeingDrawn;
-
 		System::Collections::Generic::Dictionary<Point, Color>^ buffer;
-	private: System::Windows::Forms::ToolStripMenuItem^  fillActiveFiguresToolStripMenuItem;
-	private: System::Windows::Forms::ToolStripMenuItem^  fillColorToolStripMenuItem;
-	private: System::Windows::Forms::ToolStripMenuItem^  backgroundColorToolStripMenuItem;
-			 System::Collections::Generic::Dictionary<Point, Color>^ longBuffer;
+		System::Collections::Generic::Dictionary<Point, Color>^ longBuffer;
 
 	public:
 		MyForm(void);
@@ -100,6 +103,9 @@ namespace sem1 {
 			this->MainMenuNode = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->ClearMenuButton = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->ExitMenuButton = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->transformToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->modifyActiveFiguresToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->cropActiveLinesToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->DrawingMenuNode = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->LineMenuButton = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->CircleMenuButton = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -110,11 +116,13 @@ namespace sem1 {
 			this->fillActiveFiguresToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->colorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->colorToolStripMenuItem1 = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->fillColorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->backgroundColorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->AboutMenuButton = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->colorPicker = (gcnew System::Windows::Forms::ColorDialog());
 			this->applyButton = (gcnew System::Windows::Forms::Button());
-			this->fillColorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->backgroundColorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->toolStripSeparator1 = (gcnew System::Windows::Forms::ToolStripSeparator());
+			this->toolStripSeparator2 = (gcnew System::Windows::Forms::ToolStripSeparator());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->DrawingAreaPB))->BeginInit();
 			this->menuStrip1->SuspendLayout();
 			this->SuspendLayout();
@@ -122,7 +130,7 @@ namespace sem1 {
 			// DrawingAreaPB
 			// 
 			this->DrawingAreaPB->Location = System::Drawing::Point(0, 36);
-			this->DrawingAreaPB->Margin = System::Windows::Forms::Padding(2, 2, 2, 2);
+			this->DrawingAreaPB->Margin = System::Windows::Forms::Padding(2);
 			this->DrawingAreaPB->Name = L"DrawingAreaPB";
 			this->DrawingAreaPB->Size = System::Drawing::Size(1277, 984);
 			this->DrawingAreaPB->TabIndex = 0;
@@ -134,9 +142,9 @@ namespace sem1 {
 			// menuStrip1
 			// 
 			this->menuStrip1->ImageScalingSize = System::Drawing::Size(40, 40);
-			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {
-				this->MainMenuNode, this->DrawingMenuNode,
-					this->fillToolStripMenuItem, this->colorToolStripMenuItem, this->AboutMenuButton
+			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(6) {
+				this->MainMenuNode, this->transformToolStripMenuItem,
+					this->DrawingMenuNode, this->fillToolStripMenuItem, this->colorToolStripMenuItem, this->AboutMenuButton
 			});
 			this->menuStrip1->Location = System::Drawing::Point(0, 0);
 			this->menuStrip1->Name = L"menuStrip1";
@@ -148,9 +156,9 @@ namespace sem1 {
 			// MainMenuNode
 			// 
 			this->MainMenuNode->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
-			this->MainMenuNode->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {
+			this->MainMenuNode->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {
 				this->ClearMenuButton,
-					this->ExitMenuButton
+					this->toolStripSeparator2, this->ExitMenuButton
 			});
 			this->MainMenuNode->Name = L"MainMenuNode";
 			this->MainMenuNode->Size = System::Drawing::Size(50, 29);
@@ -159,22 +167,45 @@ namespace sem1 {
 			// ClearMenuButton
 			// 
 			this->ClearMenuButton->Name = L"ClearMenuButton";
-			this->ClearMenuButton->Size = System::Drawing::Size(135, 30);
+			this->ClearMenuButton->Size = System::Drawing::Size(210, 30);
 			this->ClearMenuButton->Text = L"Clear";
 			this->ClearMenuButton->Click += gcnew System::EventHandler(this, &MyForm::ClearMenuButton_Click);
 			// 
 			// ExitMenuButton
 			// 
 			this->ExitMenuButton->Name = L"ExitMenuButton";
-			this->ExitMenuButton->Size = System::Drawing::Size(135, 30);
+			this->ExitMenuButton->Size = System::Drawing::Size(210, 30);
 			this->ExitMenuButton->Text = L"Exit";
 			this->ExitMenuButton->Click += gcnew System::EventHandler(this, &MyForm::ExitMenuButton_Click);
 			// 
+			// transformToolStripMenuItem
+			// 
+			this->transformToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {
+				this->modifyActiveFiguresToolStripMenuItem,
+					this->cropActiveLinesToolStripMenuItem
+			});
+			this->transformToolStripMenuItem->Name = L"transformToolStripMenuItem";
+			this->transformToolStripMenuItem->Size = System::Drawing::Size(103, 29);
+			this->transformToolStripMenuItem->Text = L"Transform";
+			// 
+			// modifyActiveFiguresToolStripMenuItem
+			// 
+			this->modifyActiveFiguresToolStripMenuItem->Name = L"modifyActiveFiguresToolStripMenuItem";
+			this->modifyActiveFiguresToolStripMenuItem->Size = System::Drawing::Size(262, 30);
+			this->modifyActiveFiguresToolStripMenuItem->Text = L"Modify active figures";
+			// 
+			// cropActiveLinesToolStripMenuItem
+			// 
+			this->cropActiveLinesToolStripMenuItem->Name = L"cropActiveLinesToolStripMenuItem";
+			this->cropActiveLinesToolStripMenuItem->Size = System::Drawing::Size(262, 30);
+			this->cropActiveLinesToolStripMenuItem->Text = L"Crop active lines";
+			this->cropActiveLinesToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::cropActiveLinesToolStripMenuItem_Click);
+			// 
 			// DrawingMenuNode
 			// 
-			this->DrawingMenuNode->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {
+			this->DrawingMenuNode->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {
 				this->LineMenuButton,
-					this->CircleMenuButton, this->EllipseMenuButton, this->polylineFigureToolStripMenuItem
+					this->CircleMenuButton, this->EllipseMenuButton, this->toolStripSeparator1, this->polylineFigureToolStripMenuItem
 			});
 			this->DrawingMenuNode->Name = L"DrawingMenuNode";
 			this->DrawingMenuNode->Size = System::Drawing::Size(65, 29);
@@ -249,6 +280,20 @@ namespace sem1 {
 			this->colorToolStripMenuItem1->Text = L"Contour color";
 			this->colorToolStripMenuItem1->Click += gcnew System::EventHandler(this, &MyForm::ColorMenuButton_Click);
 			// 
+			// fillColorToolStripMenuItem
+			// 
+			this->fillColorToolStripMenuItem->Name = L"fillColorToolStripMenuItem";
+			this->fillColorToolStripMenuItem->Size = System::Drawing::Size(236, 30);
+			this->fillColorToolStripMenuItem->Text = L"Fill color";
+			this->fillColorToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::fillColorToolStripMenuItem_Click);
+			// 
+			// backgroundColorToolStripMenuItem
+			// 
+			this->backgroundColorToolStripMenuItem->Name = L"backgroundColorToolStripMenuItem";
+			this->backgroundColorToolStripMenuItem->Size = System::Drawing::Size(236, 30);
+			this->backgroundColorToolStripMenuItem->Text = L"Background color";
+			this->backgroundColorToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::backgroundColorToolStripMenuItem_Click);
+			// 
 			// AboutMenuButton
 			// 
 			this->AboutMenuButton->Name = L"AboutMenuButton";
@@ -266,19 +311,15 @@ namespace sem1 {
 			this->applyButton->UseVisualStyleBackColor = true;
 			this->applyButton->Click += gcnew System::EventHandler(this, &MyForm::applyButton_Click);
 			// 
-			// fillColorToolStripMenuItem
+			// toolStripSeparator1
 			// 
-			this->fillColorToolStripMenuItem->Name = L"fillColorToolStripMenuItem";
-			this->fillColorToolStripMenuItem->Size = System::Drawing::Size(236, 30);
-			this->fillColorToolStripMenuItem->Text = L"Fill color";
-			this->fillColorToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::fillColorToolStripMenuItem_Click);
+			this->toolStripSeparator1->Name = L"toolStripSeparator1";
+			this->toolStripSeparator1->Size = System::Drawing::Size(260, 6);
 			// 
-			// backgroundColorToolStripMenuItem
+			// toolStripSeparator2
 			// 
-			this->backgroundColorToolStripMenuItem->Name = L"backgroundColorToolStripMenuItem";
-			this->backgroundColorToolStripMenuItem->Size = System::Drawing::Size(236, 30);
-			this->backgroundColorToolStripMenuItem->Text = L"Background color";
-			this->backgroundColorToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::backgroundColorToolStripMenuItem_Click);
+			this->toolStripSeparator2->Name = L"toolStripSeparator2";
+			this->toolStripSeparator2->Size = System::Drawing::Size(207, 6);
 			// 
 			// MyForm
 			// 
@@ -289,7 +330,7 @@ namespace sem1 {
 			this->Controls->Add(this->DrawingAreaPB);
 			this->Controls->Add(this->menuStrip1);
 			this->MainMenuStrip = this->menuStrip1;
-			this->Margin = System::Windows::Forms::Padding(2, 2, 2, 2);
+			this->Margin = System::Windows::Forms::Padding(2);
 			this->Name = L"MyForm";
 			this->Text = L"Seminar N. Sergey Pavlov";
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->DrawingAreaPB))->EndInit();
@@ -349,6 +390,10 @@ namespace sem1 {
 		System::Void applyLongBuffer();
 
 		System::Void addObjectToLongBuffer(IGeometry^ object);
+
+		System::Void cropActiveLinesToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e);
+
+		System::Void CheckLinesCropping();
 
 };
 }
