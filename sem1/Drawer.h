@@ -163,7 +163,7 @@ namespace Drawer
 			);
 			
 			///<summary>
-			/// 
+			/// Sort the given array of points to be ascending
 			///</summary>
 			static System::Void SortPointList(
 				System::Collections::Generic::List<System::Drawing::Point>^ points

@@ -9,7 +9,6 @@
 using namespace sem1; //Windows Forms
 using namespace Drawer; // Drawing logic
 using namespace GeometryTypes; // Types used in the program
-using namespace System::Linq;
 using namespace System::Collections::Generic;
 
 /*
@@ -20,7 +19,7 @@ using namespace System::Collections::Generic;
 Completed tasks:
 
 	  Seminar 1:	Line, ellipse and circle drawing. Drawing logic is in the Drawer.cpp
-	  Seminar 2:	Seed filling
+	  Seminar 2:	Seed filling, XOR-like filling, lines cropping
 */
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -151,6 +150,7 @@ System::Void sem1::MyForm::handleDrawObject(const bool & isTemporary, const bool
 		if (isTemporary && isLongTerm)
 		{
 			addObjectToLongBuffer(GeometryTypes::Line(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y, drawingColor));
+			fillActiveFiguresToolStripMenuItem->Enabled = false;
 		}
 	}
 	else if (drawingMode == DrawingMode::circle)
@@ -238,6 +238,7 @@ System::Void sem1::MyForm::pb_MouseUp(System::Object ^ sender, System::Windows::
 			pointStart = getCurMousePBPosition();
 			isPolylineBeingDrawn = true;
 			polylineStartPoint = pointStart; 
+			IsDrawingPolylineStatusChanged(true);
 		}
 		else
 		{			
@@ -247,6 +248,7 @@ System::Void sem1::MyForm::pb_MouseUp(System::Object ^ sender, System::Windows::
 			{
 				pointEnd = polylineStartPoint;
 				isPolylineBeingDrawn = false;
+				IsDrawingPolylineStatusChanged(false);
 			}
 
 			handleDrawObject(true, true);
@@ -324,7 +326,14 @@ System::Void sem1::MyForm::polylineFigureToolStripMenuItem_Click(System::Object 
 
 System::Void sem1::MyForm::seedFillToolStripMenuItem_Click(System::Object ^ sender, System::EventArgs ^ e)
 {
+	if (longBufferedObjects->Count > 0 || longBuffer->Count > 0)
+		applyLongBuffer();
 	drawingMode = DrawingMode::seedFill;
+}
+
+System::Void sem1::MyForm::cropActiveLinesToolStripMenuItem_Click(System::Object ^ sender, System::EventArgs ^ e)
+{
+	drawingMode = DrawingMode::cropRect;
 }
 
 System::Void sem1::MyForm::fillActiveFiguresToolStripMenuItem_Click(System::Object ^ sender, System::EventArgs ^ e)
@@ -355,7 +364,7 @@ System::Void sem1::MyForm::fillColorToolStripMenuItem_Click(System::Object ^ sen
 
 System::Void sem1::MyForm::backgroundColorToolStripMenuItem_Click(System::Object ^ sender, System::EventArgs ^ e)
 {
-	colorPicker->ShowDialog();
+	colorPicker->ShowDialog();	
 	backgroundColor = colorPicker->Color;
 
 	ClearDrawingArea();
@@ -369,8 +378,9 @@ System::Void sem1::MyForm::AboutMenuButton_Click(System::Object ^ sender, System
 		"\nAll the drawn figures will at first be put to a buffer. One can apply them by clicking the \"Apply\" button." +
 		"\nIn the \"Fill\" menu strip one can find 2 different ways of filling figures. First one is a simple seed filling which one should use when all of the figures are applied." +
 		"\nThe second filling method fills in all of the closed figures which haven't yet been applied. Filling them this way will automatically apply them." +
+		"\nYou can crop the active lines with the respective menu strip. It will first show you the way it will be cropped. After you apply, all of the additional materials will be deleted except the cropped lines." +
 		"\nColor is picked in a \"Color\" menu strip. Changing the background color will clear the drawing area." +
-		"\nYou can clear the drawing are in a menu strip \"Drawing\"");
+		"\nYou can clear the drawing are in a menu strip \"File\"");
 }
 
 System::Void sem1::MyForm::applyButton_Click(System::Object ^ sender, System::EventArgs ^ e)
@@ -381,6 +391,9 @@ System::Void sem1::MyForm::applyButton_Click(System::Object ^ sender, System::Ev
 System::Void sem1::MyForm::applyLongBuffer()
 {
 	applyButton->Enabled = false;
+
+	IsCroppingStatusChanged(false);
+
 	d->PaintPixelArray(g, DrawingAreaPB, longBuffer); //return pixels from the longterm buffer to the drawing area
 	longBuffer->Clear(); // clear the longterm pixel buffer
 
@@ -407,6 +420,8 @@ System::Void sem1::MyForm::applyLongBuffer()
 
 		drawPixelsAndHandleBuffer(pixels, false, false, drawingColor, 1);
 	}
+
+	fillActiveFiguresToolStripMenuItem->Enabled = true;
 	
 	longBufferedObjects->Clear(); // clear the longterm buffered objects
 }
@@ -416,11 +431,6 @@ System::Void sem1::MyForm::addObjectToLongBuffer(GeometryTypes::IGeometry^ objec
 	longBufferedObjects->Add(object);
 	if (longBufferedObjects->Count > 0)
 		applyButton->Enabled = true;
-}
-
-System::Void sem1::MyForm::cropActiveLinesToolStripMenuItem_Click(System::Object ^ sender, System::EventArgs ^ e)
-{
-	drawingMode = DrawingMode::cropRect;
 }
 
 System::Void sem1::MyForm::CheckLinesCropping()
@@ -441,5 +451,9 @@ System::Void sem1::MyForm::CheckLinesCropping()
 	drawPixelsAndHandleBuffer(pixelsDict[(int)GeometryTypes::VisibilityType::visible], true, true, Color::Green, 10);
 
 	auto rectPixels = d->GetRectanglePixels(pointStart.X, pointStart.Y, pointEnd.X, pointEnd.Y);
-	drawPixelsAndHandleBuffer(rectPixels, true, true, Color::Black, 10);
+	if (longBufferedObjects->Count > 0 || longBuffer->Count > 0)
+	{
+		drawPixelsAndHandleBuffer(rectPixels, true, true, Color::Black, 10);
+		IsCroppingStatusChanged(true);
+	}
 }

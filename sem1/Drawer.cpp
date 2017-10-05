@@ -195,7 +195,7 @@
 				//g->FillRectangle(brush, leftPoint.X, leftPoint.Y, 1, 1);				
 			} 
 
-			DrawingAreaPB->Refresh();
+			//DrawingAreaPB->Refresh();
 
 			for (int lineStep = -1; lineStep <= 1; lineStep+=2)
 			{
@@ -232,6 +232,9 @@
 			{
 				auto pStart = objects[i]->GetStartPoint();
 				auto pEnd = objects[i]->GetEndPoint();
+
+				if (pStart.Equals(pEnd)) continue;
+				
 				curPoints = GetLinePixels(pStart.X, pStart.Y, pEnd.X, pEnd.Y);
 
 				if (!isDrawingPolyline) // we weren't drawing a polyline before
@@ -435,14 +438,6 @@
 				{
 					List<Point>^ linePoints = gcnew List<Point>();
 					linePoints->Add(pStart); linePoints->Add(pEnd);
-
-					//double m = (diffY) / (double)(diffX);
-					//double m = (pEnd.Y - pStart.Y) / (double)(pEnd.X - pStart.X);
-
-					//int yL = m*(x1 - pStart.X) + pStart.Y,
-					//	yR = m*(x2 - pStart.X) + pStart.Y,
-					//	xT = (1 / m)*(y1 - pStart.Y) + pStart.X,
-					//	xB = (1 / m)*(y2 - pStart.Y) + pStart.X;
 
 					int diffY = pEnd.Y - pStart.Y,
 						diffX = pEnd.X - pStart.X;

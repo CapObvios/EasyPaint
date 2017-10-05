@@ -332,7 +332,7 @@ namespace sem1 {
 			this->MainMenuStrip = this->menuStrip1;
 			this->Margin = System::Windows::Forms::Padding(2);
 			this->Name = L"MyForm";
-			this->Text = L"Seminar N. Sergey Pavlov";
+			this->Text = L"Seminar 2. Filling and 2-dim cropping. Sergey Pavlov";
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->DrawingAreaPB))->EndInit();
 			this->menuStrip1->ResumeLayout(false);
 			this->menuStrip1->PerformLayout();
@@ -394,6 +394,33 @@ namespace sem1 {
 		System::Void cropActiveLinesToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e);
 
 		System::Void CheckLinesCropping();
+
+		System::Void IsDrawingPolylineStatusChanged(bool isNowDrawing)
+		{
+			ClearMenuButton						->Enabled = !isNowDrawing;
+
+			transformToolStripMenuItem			->Enabled = !isNowDrawing;
+			DrawingMenuNode						->Enabled = !isNowDrawing;
+			fillToolStripMenuItem				->Enabled = !isNowDrawing;
+			colorToolStripMenuItem				->Enabled = !isNowDrawing;
+		}
+
+		System::Void IsCroppingStatusChanged(bool isNowCropping)
+		{
+			transformToolStripMenuItem			->Enabled = !isNowCropping;
+			DrawingMenuNode						->Enabled = !isNowCropping;
+			fillToolStripMenuItem				->Enabled = !isNowCropping;
+			colorToolStripMenuItem				->Enabled = !isNowCropping;
+			ClearMenuButton						->Enabled = !isNowCropping;
+
+			//LineMenuButton						->Enabled = !isNowCropping;
+			//CircleMenuButton					->Enabled = !isNowCropping;
+			//EllipseMenuButton					->Enabled = !isNowCropping;
+			//polylineFigureToolStripMenuItem		->Enabled = !isNowCropping;
+			//seedFillToolStripMenuItem			->Enabled = !isNowCropping;
+			//fillActiveFiguresToolStripMenuItem	->Enabled = !isNowCropping;
+			//cropActiveLinesToolStripMenuItem	->Enabled = !isNowCropping;
+		}
 
 };
 }
