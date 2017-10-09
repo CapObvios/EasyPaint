@@ -1,6 +1,6 @@
 # Computer graphics seminar
 
-Hereby you can see a school project evolving through the computer graphics classes.
+Hereby you can see the first computer graphics school project. This is a smal utility program where you can draw simple shapes. Program made by Sergey Pavlov.
 
 ## Seminar 1
 Simple line, circle and ellipse building. Color picker and clearing the screen included.
