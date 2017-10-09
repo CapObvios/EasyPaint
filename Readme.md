@@ -1,4 +1,4 @@
-# Computer graphics seminar
+# Easy Paint
 
 Hereby you can see the first computer graphics school project. This is a smal utility program where you can draw simple shapes. 
 
